@@ -8,7 +8,8 @@
     "dev:ui": "nodemon ui.js",
     "lint": "eslint .",
     "release": "npm version patch && git push --tags && npm publish",
-    "postinstall": "./scripts/postinstall.sh"
+    "postinstall": "./scripts/postinstall.sh",
+    "test" : "mocha --recursive tests/"
   },
   "author": "Chris LaPointe",
   "license": "MIT",
@@ -16,6 +17,12 @@
     "js-yaml": "^3.10.0",
     "lodash": "^4.17.4",
     "moment": "^2.19.3",
-    "numeral": "^2.0.6"
+    "numeral": "^2.0.6",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1",
+    "nodemon": "^1.12.4"
   }
 }

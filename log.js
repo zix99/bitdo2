@@ -1,13 +1,11 @@
 const winston = require('winston');
 const ui = require('./ui')
-const MethodTransport = require('./lib/methodtransport');
 const config = require('./config');
 
 const log = new (winston.Logger)({
   level: config.verbose ? 'debug' : 'info',
   handleExceptions: false,
   transports: [
-    new MethodTransport(ui.log),
     new (winston.transports.File)({
       filename: config.log,
       maxsize: 1024 * 1024 * 10,
