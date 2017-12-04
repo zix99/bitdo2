@@ -9,13 +9,17 @@
     "lint": "eslint .",
     "release": "npm version patch && git push --tags && npm publish",
     "postinstall": "./scripts/postinstall.sh",
-    "test" : "mocha --recursive tests/"
+    "test": "mocha --recursive tests/"
   },
   "author": "Chris LaPointe",
   "license": "MIT",
   "dependencies": {
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.8.5",
+    "chalk": "^2.3.0",
     "js-yaml": "^3.10.0",
     "lodash": "^4.17.4",
+    "memoizee": "^0.4.11",
     "moment": "^2.19.3",
     "numeral": "^2.0.6",
     "winston": "^2.4.0"
