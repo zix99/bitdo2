@@ -10,6 +10,7 @@ const log = require('./log');
 const format = require('./lib/format');
 const MethodTransport = require('./lib/methodtransport');
 const Promise = require('bluebird');
+const ConversionService = require('./services/conversions');
 
 /* eslint arrow-body-style: off */
 
@@ -119,18 +120,24 @@ const exchanges = _.map(config.exchanges, (exchangeConfig, key) => {
   log.info(`Initializing exchange ${key}...`);
   return Exchange.createExchange(key, exchangeConfig);
 });
+const conversions = ConversionService(exchanges);
 
 function decorateHolding(holding) {
-  return Promise.resolve(_.assign({
-    conversions: {
-      BTC: 1.0,
-      USD: 1.0,
-    },
-    ticker: {
-      USD: 2.0,
-    },
-    delta: 22,
-  }, holding));
+  return Promise.all([
+    conversions.getRate(holding.currency, 'BTC').catch(() => 0),
+    conversions.getRate(holding.currency, 'USD').catch(() => 0),
+  ]).spread((btc, usd) => {
+    return _.assign({
+      conversions: {
+        BTC: btc * holding.balance,
+        USD: usd * holding.balance,
+      },
+      ticker: {
+        USD: usd,
+      },
+      delta: -1,
+    }, holding);
+  });
 }
 
 function updateHoldings() {
