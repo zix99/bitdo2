@@ -75,15 +75,28 @@ Exchange.prototype.__getMarkets = function __getMarkets() {
 // Create a LIMIT order
 //  side: buy/sell
 //  product: Product id (eg BTC-USD)
-//  size: Amount to buy/sell
-//  price: Amount to buy/sell at (assumes LIMIT)
-Exchange.prototype.createLimitOrder = function createLimitOrder(side, product, size, price) {
+//  size: Amount to buy/sell (string or float)
+//  price: Amount to buy/sell at (assumes LIMIT) (string or float)
+Exchange.prototype.createLimitOrder = function createLimitOrder(side, currency, relation, size, price) {
   /* {
     id: 'abcdef', // whatever id used to represent the trade
     settled: true/false, // If the order has been immediately settled
   } */
-  return this._impl.createOrder(side, product, size, price)
-    .then(ret => _.assign({ exchange: this, side, product, size, price }, ret));
+  return this._impl.createLimitOrder(side, currency, relation, size, price)
+    .then(ret => _.assign({ exchange: this, side, currency, relation, size, price }, ret));
+};
+
+// Get order details from orderId
+Exchange.prototype.getOrder = function getOrder(orderId) {
+  /* {
+    settled: true/false,
+    status: 'F', // Same set as order list
+    price: ...,
+    quantity: ...,
+    product: ...,
+  } */
+  return this._impl.getOrder(orderId)
+    .then(ret => _.assign({ exchange: this, id: orderId }, ret));
 };
 
 Exchange.prototype.cancelOrder = function cancelOrder(orderId) {
@@ -104,7 +117,10 @@ function requireExchange(name, config) {
 
 module.exports = {
   createExchange(name, config) {
-    // Simple for now, will wrap in the future.
     return new Exchange(name, requireExchange(name, config));
+  },
+
+  createFromConfig(configSet) {
+    return _.map(configSet, (exchangeConfig, key) => this.createExchange(key, exchangeConfig));
   },
 };

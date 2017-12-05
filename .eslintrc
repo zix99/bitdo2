@@ -19,5 +19,6 @@
         "curly" : ["error", "multi-or-nest"],
         "no-plusplus" : "off",
         "object-curly-newline" : "off",
+        "no-mixed-operators" : "off",
     }
 }

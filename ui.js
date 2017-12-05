@@ -116,10 +116,7 @@ function directionalColor(val) {
 
 
 // Set up exchanges
-const exchanges = _.map(config.exchanges, (exchangeConfig, key) => {
-  log.info(`Initializing exchange ${key}...`);
-  return Exchange.createExchange(key, exchangeConfig);
-});
+const exchanges = Exchange.createFromConfig(config.exchanges);
 const conversions = ConversionService(exchanges);
 
 const HOLDING_DELTA_HISTORY = {};
@@ -142,7 +139,7 @@ function decorateHolding(holding) {
 
 function updateHoldings() {
   log.info('Updating holdings...');
-  Promise.map(exchanges, exchange => exchange.getHoldings())
+  return Promise.map(exchanges, exchange => exchange.getHoldings())
     .then(_.flatten)
     .map(decorateHolding)
     .then(holdings => _.orderBy(holdings, h => h.conversions.USD, 'desc'))
@@ -174,12 +171,15 @@ function updateHoldings() {
         data,
       });
       screen.render();
+    })
+    .catch(err => {
+      log.error(err.message);
     });
 }
 
 function updateOrders() {
   log.info('Updating orders...');
-  Promise.map(exchanges, exchange => exchange.getOrders())
+  return Promise.map(exchanges, exchange => exchange.getOrders())
     .then(_.flatten)
     .then(orders => {
       const rows = _.flatten([
@@ -214,6 +214,9 @@ function updateOrders() {
       rows.unshift(['', 'Created', 'Exchange', 'Product', 'Side', 'Type', 'Size', 'Price', 'Fee']);
       orderTable.setData(rows);
       screen.render();
+    })
+    .catch(err => {
+      log.error(err.message);
     });
 }
 
