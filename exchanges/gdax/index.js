@@ -51,11 +51,7 @@ module.exports = exchangeOpts => {
             'Content-Type': 'application/json',
           }),
         });
-      }).then(resp => resp.data)
-      .catch(err => {
-        console.dir(err.response.data);
-        throw err;
-      });
+      }).then(resp => resp.data);
   }
 
   function getStatusCode(status) {
