@@ -47,7 +47,7 @@ Exchange.prototype.getOrders = function getOrders() {
   [{
     status: 'O', // O=open, F=filled, X=canceled/rejected, ? = unknown/other
     product: order.product,
-    price: order.price,
+    price: order.price, (per unit)
     size: order.size,
     date: order.created_at,
     type: order.type,
