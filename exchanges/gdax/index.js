@@ -47,9 +47,15 @@ module.exports = exchangeOpts => {
           method,
           url: `${config.host}${uri}`,
           data: serializedBody,
-          headers,
+          headers: _.assign(headers, {
+            'Content-Type': 'application/json',
+          }),
         });
-      }).then(resp => resp.data);
+      }).then(resp => resp.data)
+      .catch(err => {
+        console.dir(err.response.data);
+        throw err;
+      });
   }
 
   function getStatusCode(status) {
@@ -110,6 +116,34 @@ module.exports = exchangeOpts => {
             volume: parseFloat(data.volume),
           };
         });
+    },
+
+    createLimitOrder(side, product, size, price) {
+      return executeRequest('POST', '/orders', {
+        size,
+        price,
+        product_id: product,
+        side,
+      }).then(data => ({
+        id: data.id,
+        settled: data.settled,
+      }));
+    },
+
+    getOrder(orderId) {
+      return executeRequest('GET', `/orders/${orderId}`)
+        .then(order => ({
+          settled: order.settled,
+          status: getStatusCode(order.status),
+          price: order.funds,
+          quantity: order.size,
+          product: order.product_id,
+        }));
+    },
+
+    cancelOrder(orderId) {
+      return executeRequest('DELETE', `/orders/${orderId}`)
+        .then(() => ({}));
     },
   };
 };
