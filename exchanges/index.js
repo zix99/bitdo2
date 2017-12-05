@@ -46,7 +46,7 @@ Exchange.prototype.getOrders = function getOrders() {
   /*
   [{
     status: 'O', // O=open, F=filled, X=canceled/rejected, ? = unknown/other
-    product: order.product,
+    product: order.product, // eg RDD-BTC
     price: order.price, (per unit)
     size: order.size,
     date: order.created_at,
@@ -70,6 +70,26 @@ Exchange.prototype.__getMarkets = function __getMarkets() {
   }] */
   return this._impl.getMarkets()
     .map(market => _.assign({ exchange: this }, market));
+};
+
+// Create a LIMIT order
+//  side: buy/sell
+//  product: Product id (eg BTC-USD)
+//  size: Amount to buy/sell
+//  price: Amount to buy/sell at (assumes LIMIT)
+Exchange.prototype.createLimitOrder = function createLimitOrder(side, product, size, price) {
+  /* {
+    id: 'abcdef', // whatever id used to represent the trade
+    settled: true/false, // If the order has been immediately settled
+  } */
+  return this._impl.createOrder(side, product, size, price)
+    .then(ret => _.assign({ exchange: this, side, product, size, price }, ret));
+};
+
+Exchange.prototype.cancelOrder = function cancelOrder(orderId) {
+  /* Ret: {} */
+  return this._impl.cancelOrder(orderId)
+    .then(ret => _.assign({ exchange: this, id: orderId }, ret));
 };
 
 /* eslint global-require: off */
