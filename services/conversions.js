@@ -11,7 +11,7 @@ module.exports = exchanges => {
     },
 
     /* Get conversion rate, allows for jumping through BTC */
-    getRateTickers(currency, target) {
+    __getRateTicker(currency, target) {
       if (currency === target)
         return Promise.resolve(1.0);
 
@@ -31,17 +31,18 @@ module.exports = exchanges => {
 
     getRate(currency, target) {
       /* eslint arrow-body-style: off */
-      return this.getRateTickers(currency, target)
+      return this.getRateTicker(currency, target)
         .catch(() => {
           // Try resolving via BTC
           return Promise.all([
-            this.getRateTickers(currency, 'BTC'),
-            this.getRateTickers('BTC', target),
+            this.getRateTicker(currency, 'BTC'),
+            this.getRateTicker('BTC', target),
           ]).spread((viabtc, totarget) => viabtc * totarget);
         });
     },
   };
 
+  lib.getRateTicker = memoize(lib.__getRateTicker, { maxAge: 10 * 1000, promise: true });
   lib.getMarketMap = memoize(lib.__getMarketMap, { maxAge: 60 * 60 * 1000, promise: true });
 
   return lib;

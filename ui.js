@@ -122,6 +122,7 @@ const exchanges = _.map(config.exchanges, (exchangeConfig, key) => {
 });
 const conversions = ConversionService(exchanges);
 
+const HOLDING_DELTA_HISTORY = {};
 function decorateHolding(holding) {
   return Promise.all([
     conversions.getRate(holding.currency, 'BTC').catch(() => 0),
@@ -135,7 +136,6 @@ function decorateHolding(holding) {
       ticker: {
         USD: usd,
       },
-      delta: -1,
     }, holding);
   });
 }
@@ -145,10 +145,13 @@ function updateHoldings() {
   Promise.map(exchanges, exchange => exchange.getHoldings())
     .then(_.flatten)
     .map(decorateHolding)
+    .then(holdings => _.orderBy(holdings, h => h.conversions.USD, 'desc'))
     .then(holdings => {
-      // console.dir(holdings);
       const sums = { BTC: 0, USD: 0 };
       const data = _.map(holdings, v => {
+        const key = `${v.exchange.name}:${v.currency}`;
+        HOLDING_DELTA_HISTORY[key] = (_.get(HOLDING_DELTA_HISTORY, key, v.conversions.USD) + v.conversions.USD) / 2.0;
+        const delta = v.conversions.USD - HOLDING_DELTA_HISTORY[key];
         sums.BTC += v.conversions.BTC;
         sums.USD += v.conversions.USD;
         return [
@@ -160,14 +163,14 @@ function updateHoldings() {
           format.number(v.hold),
           format.number(v.conversions.BTC),
           chalk.blue(format.number(v.conversions.USD)),
-          directionalColor(v.delta)(format.number(v.delta)),
+          directionalColor(delta)(format.number(delta)),
         ];
       });
       data.unshift([]);
       data.unshift(['', 'Total', '', '', '', '', format.number(sums.BTC), format.number(sums.USD)]);
 
       holdingTable.setData({
-        headers: ['Updated', 'Exch', 'Sym', 'Last USD', 'Owned', 'Hold', 'BTC', 'USD', 'Delta'],
+        headers: ['Updated', 'Exch', 'Sym', 'Last USD', 'Owned', 'Hold', 'BTC', 'USD', 'EMA-D'],
         data,
       });
       screen.render();

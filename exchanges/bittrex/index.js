@@ -72,7 +72,7 @@ module.exports = exchangeOpts => {
             return _.assign({
               status: 'F',
               product: order.Exchange,
-              price: order.Price,
+              price: order.PricePerUnit || order.Price / order.Quantity,
               size: order.Quantity,
               date: order.TimeStamp,
               fee: order.Commission,
