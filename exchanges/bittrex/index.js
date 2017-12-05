@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const uuid = require('uuid/v4');
 const Promise = require('bluebird');
+const querystring = require('querystring');
 const _ = require('lodash');
 
 /* eslint arrow-body-style: off */
@@ -18,15 +19,16 @@ module.exports = exchangeOpts => {
     return hmac.update(uri).digest('hex');
   }
 
-  function makeSignedRequest(method, uri, opts) {
+  function makeSignedRequest(method, uri, params = {}, opts = {}) {
     const nonce = uuid();
-    const fullUrl = `${config.host}${uri}?nonce=${nonce}&apikey=${config.apikey}`;
+    const qs = querystring.stringify(params);
+    const fullUrl = `${config.host}${uri}?nonce=${nonce}&apikey=${config.apikey}&${qs}`;
     return Promise.resolve(axios(_.merge({
       method,
       url: fullUrl,
       headers: {
         apisign: createSignature(fullUrl, nonce),
-      }
+      },
     }, opts)));
   }
 
@@ -120,11 +122,11 @@ module.exports = exchangeOpts => {
     createLimitOrder(side, product, size, price) {
       let url = null;
       if (side === 'buy')
-        url = `${config.host}/api/v1.1/market/buylimit`;
+        url = '/api/v1.1/market/buylimit';
       else if (side === 'sell')
-        url = `${config.host}/api/v1.1/market/selllimit`;
+        url = '/api/v1.1/market/selllimit';
 
-      return makeSignedRequest('GET', url, { params: { market: product, quantity: size, rate: price } })
+      return makeSignedRequest('GET', url, { market: product, quantity: size, rate: price })
         .then(resp => {
           if (!resp.data.success)
             throw Error(`Failed to create bittrex trade on ${side} ${product}`);
@@ -132,8 +134,25 @@ module.exports = exchangeOpts => {
         });
     },
 
+    getOrder(orderId) {
+      return makeSignedRequest('GET', '/api/v1.1/account/getorder', { uuid: orderId })
+        .then(resp => {
+          if (!resp.data.success)
+            throw Error(`Failed to get bittrex order for ${orderId}`);
+          const order = resp.data.result;
+          /* eslint no-nested-ternary: off */
+          return {
+            settled: !order.IsOpen,
+            price: order.Limit,
+            quantity: order.Quantity,
+            product: order.Exchange,
+            status: order.IsOpen ? 'O' : (order.QuantityRemaining > 0 ? 'X' : 'F'),
+          };
+        });
+    },
+
     cancelOrder(orderId) {
-      return makeSignedRequest('GET', `${config.host}/api/v1.1/market/cancel`, { params: { uuid: orderId } })
+      return makeSignedRequest('GET', '/api/v1.1/market/cancel', { uuid: orderId })
         .then(resp => {
           if (!resp.data.success)
             throw Error(`Failed to cancel order ${orderId}`);

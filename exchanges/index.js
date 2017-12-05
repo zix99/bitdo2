@@ -75,8 +75,8 @@ Exchange.prototype.__getMarkets = function __getMarkets() {
 // Create a LIMIT order
 //  side: buy/sell
 //  product: Product id (eg BTC-USD)
-//  size: Amount to buy/sell
-//  price: Amount to buy/sell at (assumes LIMIT)
+//  size: Amount to buy/sell (string or float)
+//  price: Amount to buy/sell at (assumes LIMIT) (string or float)
 Exchange.prototype.createLimitOrder = function createLimitOrder(side, product, size, price) {
   /* {
     id: 'abcdef', // whatever id used to represent the trade
@@ -91,6 +91,9 @@ Exchange.prototype.getOrder = function getOrder(orderId) {
   /* {
     settled: true/false,
     status: 'F', // Same set as order list
+    price: ...,
+    quantity: ...,
+    product: ...,
   } */
   return this._impl.getOrder(orderId)
     .then(ret => _.assign({ exchange: this, id: orderId }, ret));
