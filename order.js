@@ -54,7 +54,7 @@ function createOrder(side, args) {
   log.info(`Creating ${side} order for ${args.amount} on ${product.exchange}:${product.symbol}-${product.relation} at ${args.price}...`);
 
   const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
-  return exchange.createLimitOrder(side, `${product.symbol}-${product.relation}`, args.amount, args.price)
+  return exchange.createLimitOrder(side, product.symbol, product.relation, args.amount, args.price)
     .then(order => {
       log.info(`Order successfully created with id ${order.id}`);
       if (!args.notrack)
@@ -91,7 +91,7 @@ function trailingSell(args) {
 
             if (ticker.price <= stopTrigger) {
               log.warn(`Ticker ${ticker.price} is less than trigger price of ${stopTrigger}.  Creating sell order at ${stopLimit}`);
-              exchange.createLimitOrder('sell', `${product.symbol}-${product.relation}`, args.amount, stopLimit)
+              exchange.createLimitOrder('sell', product.symbol, product.relation, args.amount, stopLimit)
                 .then(order => {
                   if (!args.notrack)
                     return waitForOrderFill(exchange, order.id, args.pollsecs);

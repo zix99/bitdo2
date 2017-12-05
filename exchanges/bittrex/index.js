@@ -119,17 +119,18 @@ module.exports = exchangeOpts => {
         });
     },
 
-    createLimitOrder(side, product, size, price) {
+    createLimitOrder(side, currency, relation, size, price) {
       let url = null;
       if (side === 'buy')
         url = '/api/v1.1/market/buylimit';
       else if (side === 'sell')
         url = '/api/v1.1/market/selllimit';
 
-      return makeSignedRequest('GET', url, { market: product, quantity: size, rate: price })
+      // NOTE: The market here is intentionally flipped cause that's how bittrex does it
+      return makeSignedRequest('GET', url, { market: `${relation}-${currency}`, quantity: size, rate: price })
         .then(resp => {
           if (!resp.data.success)
-            throw Error(`Failed to create bittrex trade on ${side} ${product}: ${resp.data.message}`);
+            throw Error(`Failed to create bittrex trade on ${side} ${currency}-${relation}: ${resp.data.message}`);
           return { id: resp.data.result.uuid };
         });
     },

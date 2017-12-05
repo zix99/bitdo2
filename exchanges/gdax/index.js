@@ -118,11 +118,11 @@ module.exports = exchangeOpts => {
         });
     },
 
-    createLimitOrder(side, product, size, price) {
+    createLimitOrder(side, currency, relation, size, price) {
       return executeRequest('POST', '/orders', {
         size,
         price,
-        product_id: product,
+        product_id: `${currency}-${relation}`,
         side,
       }).then(data => ({
         id: data.id,
