@@ -25,8 +25,8 @@ if (!config.noredirect) {
     log.debug(JSON.stringify(obj));
   };
 
-  console.error = function consoleError(txt) {
-    log.error(txt);
+  console.err = function consoleError(txt) {
+    log.err(txt);
   };
 }
 
