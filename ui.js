@@ -7,7 +7,9 @@ const _ = require('lodash');
 const Exchange = require('./exchanges');
 const config = require('./config');
 const log = require('./log');
+const format = require('./lib/format');
 const MethodTransport = require('./lib/methodtransport');
+const Promise = require('bluebird');
 
 const screen = blessed.Screen({
   smartCSR: true,
@@ -117,9 +119,45 @@ const exchanges = _.map(config.exchanges, (exchangeConfig, key) => {
 });
 
 
-// Update
-setInterval(() => {
-  _.each(exchanges, exchange => {
+function updateHoldings() {
+  log.info('Updating holdings...');
+  Promise.map(exchanges, exchange => exchange.getHoldings())
+    .then(holdings => _.flatten(holdings))
+    .then(holdings => {
+      console.dir(holdings);
+      const sums = { BTC: 0, USD: 0 };
+      const data = _.map(holdings, v => {
+        //sums.BTC += v.conversions.BTC;
+        //sums.USD += v.conversions.USD;
+        return [
+          moment(v.updatedAt).format('Do hA'),
+          v.exchange.name,
+          v.currency,
+          '', //chalk.yellow(format.number(v.ticker.USD)),
+          chalk.bold.blueBright(format.number(v.balance)),
+          format.number(v.hold),
+          '', //format.number(v.conversions.BTC),
+          '', //chalk.blue(format.number(v.conversions.USD)),
+          '', //directionalColor(v.delta)(format.number(v.delta)),
+        ];
+      })
+      data.unshift([]);
+      data.unshift(['', 'Total', '', '', '', '', format.number(sums.BTC), format.number(sums.USD)]);
 
-  });
+      holdingTable.setData({
+        headers: ['Updated', 'Exch', 'Sym', 'Last USD', 'Owned', 'Hold', 'BTC', 'USD', 'Delta'],
+        data,
+      });
+    });
+}
+
+
+// Update
+function update() {
+  updateHoldings();
+  screen.render();
+}
+setInterval(() => {
+  update();
 }, 60000);
+update();

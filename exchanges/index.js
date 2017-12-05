@@ -11,7 +11,7 @@ function Exchange(name, impl) {
   });
 }
 
-Exchange.prototype.getTicker = function (currency, relation) {
+Exchange.prototype.getTicker = function getTicker(currency, relation) {
   /*
   {
     price: float:data.price,
@@ -23,10 +23,10 @@ Exchange.prototype.getTicker = function (currency, relation) {
   }
   */
   return this._impl.getTicker(currency, relation)
-    .then(ticker => _.assign({exchange: this, currency, relation, id: `${this.name}:${currency}-${relation}`}, ticker));
+    .then(ticker => _.assign({ exchange: this, currency, relation, id: `${this.name}:${currency}-${relation}` }, ticker));
 };
 
-Exchange.prototype.getHoldings = function () {
+Exchange.prototype.getHoldings = function getHoldings() {
   /*
   [{
     id: arbitrary-id,
@@ -39,10 +39,10 @@ Exchange.prototype.getHoldings = function () {
   }]
   */
   return this._impl.getHoldings()
-    .map(holding => _.assign({exchange: this, updatedAt: new Date()}, holding));
-}
+    .map(holding => _.assign({ exchange: this, updatedAt: new Date() }, holding));
+};
 
-Exchange.prototype.getOrders = function() {
+Exchange.prototype.getOrders = function getOrders() {
   /*
   [{
     status: 'O', // O=open, F=filled, X=canceled/rejected, ? = unknown/other
@@ -61,28 +61,30 @@ Exchange.prototype.getOrders = function() {
     .map(order => _.assign({ exchange: this }, order));
 };
 
-Exchange.prototype.__getMarkets = function() {
-  /*[{
+Exchange.prototype.__getMarkets = function __getMarkets() {
+  /* [{
     currency: product.base_currency,
     relation: product.quote_currency,
     //META:
     exchange: this,
-  }]*/
+  }] */
   return this._impl.getMarkets()
-    .map(market => _.assign({exchange: this}, market));
-}
+    .map(market => _.assign({ exchange: this }, market));
+};
 
+/* eslint global-require: off */
+/* eslint import/no-dynamic-require: off */
 function requireExchange(name, config) {
   if (fs.existsSync(`${__dirname}/${name}`))
-    return require(`./${name}`);
+    return require(`./${name}`)(config);
   if (fs.existsSync(`${__dirname}/${name}.js`))
-    return require(`./${name}.js`);
-  return require(`bitdo-exchange-${name}`);
+    return require(`./${name}.js`)(config);
+  return require(`bitdo-exchange-${name}`)(config);
 }
 
 module.exports = {
   createExchange(name, config) {
     // Simple for now, will wrap in the future.
     return new Exchange(name, requireExchange(name, config));
-  }
+  },
 };

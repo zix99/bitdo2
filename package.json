@@ -16,6 +16,7 @@
   "dependencies": {
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.5",
+    "bluebird": "^3.5.1",
     "chalk": "^2.3.0",
     "js-yaml": "^3.10.0",
     "lodash": "^4.17.4",
