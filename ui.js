@@ -11,6 +11,8 @@ const format = require('./lib/format');
 const MethodTransport = require('./lib/methodtransport');
 const Promise = require('bluebird');
 
+/* eslint arrow-body-style: off */
+
 const screen = blessed.Screen({
   smartCSR: true,
 });
@@ -122,25 +124,25 @@ const exchanges = _.map(config.exchanges, (exchangeConfig, key) => {
 function updateHoldings() {
   log.info('Updating holdings...');
   Promise.map(exchanges, exchange => exchange.getHoldings())
-    .then(holdings => _.flatten(holdings))
+    .then(_.flatten)
     .then(holdings => {
-      console.dir(holdings);
+      // console.dir(holdings);
       const sums = { BTC: 0, USD: 0 };
       const data = _.map(holdings, v => {
-        //sums.BTC += v.conversions.BTC;
-        //sums.USD += v.conversions.USD;
+        // sums.BTC += v.conversions.BTC;
+        // sums.USD += v.conversions.USD;
         return [
           moment(v.updatedAt).format('Do hA'),
           v.exchange.name,
           v.currency,
-          '', //chalk.yellow(format.number(v.ticker.USD)),
+          '', // chalk.yellow(format.number(v.ticker.USD)),
           chalk.bold.blueBright(format.number(v.balance)),
           format.number(v.hold),
-          '', //format.number(v.conversions.BTC),
-          '', //chalk.blue(format.number(v.conversions.USD)),
-          '', //directionalColor(v.delta)(format.number(v.delta)),
+          '', // format.number(v.conversions.BTC),
+          '', // chalk.blue(format.number(v.conversions.USD)),
+          '', // directionalColor(v.delta)(format.number(v.delta)),
         ];
-      })
+      });
       data.unshift([]);
       data.unshift(['', 'Total', '', '', '', '', format.number(sums.BTC), format.number(sums.USD)]);
 
@@ -148,6 +150,47 @@ function updateHoldings() {
         headers: ['Updated', 'Exch', 'Sym', 'Last USD', 'Owned', 'Hold', 'BTC', 'USD', 'Delta'],
         data,
       });
+      screen.render();
+    });
+}
+
+function updateOrders() {
+  log.info('Updating orders...');
+  Promise.map(exchanges, exchange => exchange.getOrders())
+    .then(_.flatten)
+    .then(orders => {
+      const rows = _.flatten([
+        _.map(_.orderBy(_.filter(orders, x => x.status === 'O'), x => x.date, 'desc'), order => {
+          return [
+            order.status,
+            moment(order.date).format('M/D H:mm'),
+            order.exchange.name,
+            order.product,
+            order.side,
+            order.type,
+            format.number(order.size),
+            format.number(order.price),
+            'N/A',
+          ];
+        }),
+        [[]],
+        _.map(_.orderBy(_.filter(orders, x => x.status !== 'O'), x => x.date, 'desc'), order => {
+          return [
+            order.status,
+            moment(order.date).format('M/D H:mm'),
+            order.exchange.name,
+            order.product,
+            order.side,
+            order.type,
+            format.number(order.size),
+            format.number(order.price),
+            format.number(order.fee),
+          ];
+        }),
+      ]);
+      rows.unshift(['', 'Created', 'Exchange', 'Product', 'Side', 'Type', 'Size', 'Price', 'Fee']);
+      orderTable.setData(rows);
+      screen.render();
     });
 }
 
@@ -155,7 +198,7 @@ function updateHoldings() {
 // Update
 function update() {
   updateHoldings();
-  screen.render();
+  updateOrders();
 }
 setInterval(() => {
   update();
