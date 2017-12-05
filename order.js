@@ -40,7 +40,7 @@ function cmdCreateBuy(args) {
   exchange.createLimitOrder('buy', `${product.relation}-${product.symbol}`, args.amount, args.price)
     .then(order => {
       log.info(`Order successfully created with id ${order.id}`);
-      if (args.track)
+      if (!args.notrack)
         return waitForOrderFill(exchange, order.id);
       return order;
     });
@@ -55,9 +55,9 @@ const args = require('yargs')
   .alias('p', 'product')
   .string('p')
   .demand('p', 'A product is required')
-  .describe('track', 'Track the order until it is filled')
-  .boolean('track')
-  .default('track', true)
+  .describe('notrack', 'Dont track the order')
+  .boolean('notrack')
+  .default('notrack', false)
   .command('buy', 'Create an order to buy a product', sub => {
     return sub
       .describe('price', 'Price at which to buy product')
