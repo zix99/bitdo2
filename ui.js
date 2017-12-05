@@ -116,10 +116,7 @@ function directionalColor(val) {
 
 
 // Set up exchanges
-const exchanges = _.map(config.exchanges, (exchangeConfig, key) => {
-  log.info(`Initializing exchange ${key}...`);
-  return Exchange.createExchange(key, exchangeConfig);
-});
+const exchanges = Exchange.createFromConfig(config.exchanges);
 const conversions = ConversionService(exchanges);
 
 const HOLDING_DELTA_HISTORY = {};

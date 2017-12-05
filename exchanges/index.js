@@ -82,8 +82,18 @@ Exchange.prototype.createLimitOrder = function createLimitOrder(side, product, s
     id: 'abcdef', // whatever id used to represent the trade
     settled: true/false, // If the order has been immediately settled
   } */
-  return this._impl.createOrder(side, product, size, price)
+  return this._impl.createLimitOrder(side, product, size, price)
     .then(ret => _.assign({ exchange: this, side, product, size, price }, ret));
+};
+
+// Get order details from orderId
+Exchange.prototype.getOrder = function getOrder(orderId) {
+  /* {
+    settled: true/false,
+    status: 'F', // Same set as order list
+  } */
+  return this._impl.getOrder(orderId)
+    .then(ret => _.assign({ exchange: this, id: orderId }, ret));
 };
 
 Exchange.prototype.cancelOrder = function cancelOrder(orderId) {
@@ -104,7 +114,10 @@ function requireExchange(name, config) {
 
 module.exports = {
   createExchange(name, config) {
-    // Simple for now, will wrap in the future.
     return new Exchange(name, requireExchange(name, config));
+  },
+
+  createFromConfig(configSet) {
+    return _.map(configSet, (exchangeConfig, key) => this.createExchange(key, exchangeConfig));
   },
 };

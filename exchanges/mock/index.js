@@ -24,4 +24,14 @@ module.exports = (config) => ({
       volume: 1000,
     });
   },
+
+  createLimitOrder() {
+    return Promise.resolve({
+      id: 'abc',
+    });
+  },
+
+  cancelOrder() {
+    return Promise.resolve({});
+  },
 });

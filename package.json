@@ -1,7 +1,8 @@
 {
   "name": "bitdo2",
   "version": "1.0.0",
-  "description": "",
+  "description": "A cryptocurrency order-rule executor",
+  "repository": "zix99/bitdo2",
   "main": "ui.js",
   "scripts": {
     "start:ui": "node ui.js",
@@ -11,6 +12,15 @@
     "postinstall": "./scripts/postinstall.sh",
     "test": "mocha --recursive tests/"
   },
+  "bin": {
+    "bitdo-ui": "./ui.js",
+    "bitdo-order": "./order.js"
+  },
+  "keywords": [
+    "cryptocurrency",
+    "gdax",
+    "bot"
+  ],
   "author": "Chris LaPointe",
   "license": "MIT",
   "dependencies": {
@@ -23,7 +33,8 @@
     "memoizee": "^0.4.11",
     "moment": "^2.19.3",
     "numeral": "^2.0.6",
-    "winston": "^2.4.0"
+    "winston": "^2.4.0",
+    "yargs": "^10.0.3"
   },
   "devDependencies": {
     "chai": "^4.1.2",
