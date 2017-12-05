@@ -13,7 +13,7 @@ log.add(winston.transports.Console, {
 });
 
 function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
-  log.info('Waiting for order to fill...');
+  log.info(`Waiting for order to fill. Polling every ${frequencySecs}s...`);
   return new Promise((resolve, reject) => {
     const intv = setInterval(() => {
       log.info('Polling...');
@@ -32,16 +32,16 @@ function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
   });
 }
 
-function cmdCreateBuy(args) {
+function createOrder(side, args) {
   const product = parsers.parseProduct(args.product);
-  log.info(`Buying ${args.amount} ${product.exchange}:${product.symbol}-${product.relation} at ${args.price}...`);
+  log.info(`Creating ${side} order for ${args.amount} on ${product.exchange}:${product.symbol}-${product.relation} at ${args.price}...`);
 
   const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
-  exchange.createLimitOrder('buy', `${product.relation}-${product.symbol}`, args.amount, args.price)
+  return exchange.createLimitOrder(side, `${product.relation}-${product.symbol}`, args.amount, args.price)
     .then(order => {
       log.info(`Order successfully created with id ${order.id}`);
       if (!args.notrack)
-        return waitForOrderFill(exchange, order.id);
+        return waitForOrderFill(exchange, order.id, args.pollsecs);
       return order;
     });
 }
@@ -55,6 +55,9 @@ const args = require('yargs')
   .alias('p', 'product')
   .string('p')
   .demand('p', 'A product is required')
+  .describe('pollsecs', 'Set the number of seconds for polling')
+  .number('pollsecs')
+  .default('pollsecs', 10)
   .describe('notrack', 'Dont track the order')
   .boolean('notrack')
   .default('notrack', false)
@@ -66,7 +69,16 @@ const args = require('yargs')
       .describe('amount', 'Amount of product to buy')
       .string('amount')
       .demand('amount');
-  }, cmdCreateBuy)
+  }, v => createOrder('buy', v))
+  .command('sell', 'Create a sell order', sub => {
+    return sub
+      .describe('price', 'Price at which to buy product')
+      .string('price')
+      .demand('price')
+      .describe('amount', 'Amount of product to buy')
+      .string('amount')
+      .demand('amount');
+  }, v => createOrder('sell', v))
   .command('help <command>', 'Show help for command', {}, () => args.showHelp())
   .demandCommand()
   .recommendCommands();

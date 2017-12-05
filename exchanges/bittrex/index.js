@@ -129,7 +129,7 @@ module.exports = exchangeOpts => {
       return makeSignedRequest('GET', url, { market: product, quantity: size, rate: price })
         .then(resp => {
           if (!resp.data.success)
-            throw Error(`Failed to create bittrex trade on ${side} ${product}`);
+            throw Error(`Failed to create bittrex trade on ${side} ${product}: ${resp.data.message}`);
           return { id: resp.data.result.uuid };
         });
     },
@@ -138,7 +138,7 @@ module.exports = exchangeOpts => {
       return makeSignedRequest('GET', '/api/v1.1/account/getorder', { uuid: orderId })
         .then(resp => {
           if (!resp.data.success)
-            throw Error(`Failed to get bittrex order for ${orderId}`);
+            throw Error(`Failed to get bittrex order for ${orderId}: ${resp.data.message}`);
           const order = resp.data.result;
           /* eslint no-nested-ternary: off */
           return {
