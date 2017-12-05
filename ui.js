@@ -120,27 +120,40 @@ const exchanges = _.map(config.exchanges, (exchangeConfig, key) => {
   return Exchange.createExchange(key, exchangeConfig);
 });
 
+function decorateHolding(holding) {
+  return Promise.resolve(_.assign({
+    conversions: {
+      BTC: 1.0,
+      USD: 1.0,
+    },
+    ticker: {
+      USD: 2.0,
+    },
+    delta: 22,
+  }, holding));
+}
 
 function updateHoldings() {
   log.info('Updating holdings...');
   Promise.map(exchanges, exchange => exchange.getHoldings())
     .then(_.flatten)
+    .map(decorateHolding)
     .then(holdings => {
       // console.dir(holdings);
       const sums = { BTC: 0, USD: 0 };
       const data = _.map(holdings, v => {
-        // sums.BTC += v.conversions.BTC;
-        // sums.USD += v.conversions.USD;
+        sums.BTC += v.conversions.BTC;
+        sums.USD += v.conversions.USD;
         return [
           moment(v.updatedAt).format('Do hA'),
           v.exchange.name,
           v.currency,
-          '', // chalk.yellow(format.number(v.ticker.USD)),
+          chalk.yellow(format.number(v.ticker.USD)),
           chalk.bold.blueBright(format.number(v.balance)),
           format.number(v.hold),
-          '', // format.number(v.conversions.BTC),
-          '', // chalk.blue(format.number(v.conversions.USD)),
-          '', // directionalColor(v.delta)(format.number(v.delta)),
+          format.number(v.conversions.BTC),
+          chalk.blue(format.number(v.conversions.USD)),
+          directionalColor(v.delta)(format.number(v.delta)),
         ];
       });
       data.unshift([]);
