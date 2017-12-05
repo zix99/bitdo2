@@ -4,6 +4,7 @@ const Exchanges = require('./exchanges');
 const log = require('./log');
 const winston = require('winston');
 const parsers = require('./lib/parsers');
+const _ = require('lodash');
 
 log.add(winston.transports.Console, {
   colorize: true,
@@ -11,6 +12,22 @@ log.add(winston.transports.Console, {
   prettyPrint: true,
   level: 'debug',
 });
+
+function intervalPromise(func, millis) {
+  return new Promise((resolve, reject) => {
+    const intv = setInterval(() => {
+      Promise.resolve(func()).then(ret => {
+        if (ret !== undefined && ret !== null) {
+          clearInterval(intv);
+          resolve(ret);
+        }
+      }).catch(err => {
+        clearInterval(intv);
+        reject(err);
+      });
+    }, millis);
+  });
+}
 
 function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
   log.info(`Waiting for order to fill. Polling every ${frequencySecs}s...`);
@@ -43,6 +60,48 @@ function createOrder(side, args) {
       if (!args.notrack)
         return waitForOrderFill(exchange, order.id, args.pollsecs);
       return order;
+    });
+}
+
+function trailingSell(args) {
+  const product = parsers.parseProduct(args.product);
+  const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
+
+  log.info(`Trailing ${args.product}...`);
+  const priceHistory = [];
+
+  exchange.getTicker(product.symbol, product.relation)
+    .then(initialTicker => {
+      priceHistory.push(initialTicker.price);
+    }).then(() => {
+      return intervalPromise(() => {
+        log.info('Polling trailing stop....');
+        return exchange.getTicker(product.symbol, product.relation)
+          .then(ticker => {
+            const mean = _.mean(priceHistory);
+            const stopTrigger = mean - mean * (args.trail / 100.0);
+            const stopLimit = stopTrigger - stopTrigger * (args.offsetprice / 100.0);
+
+            // add to price history after computing the mean
+            priceHistory.push(ticker.price);
+            if (priceHistory.length > args.smaperiods)
+              priceHistory.shift();
+
+            log.debug(`Price ${ticker.price} < ${stopTrigger}?`);
+
+            if (ticker.price <= stopTrigger) {
+              log.warn(`Ticker ${ticker.price} is less than trigger price of ${stopTrigger}.  Creating sell order at ${stopLimit}`);
+              exchange.createLimitOrder('sell', `${product.relation}-${product.symbol}`, args.amount, stopLimit)
+                .then(order => {
+                  if (!args.notrack)
+                    return waitForOrderFill(exchange, order.id, args.pollsecs);
+                  return order;
+                });
+              return true; // We're done here
+            }
+            return null;
+          });
+      }, args.pollsecs * 1000);
     });
 }
 
@@ -79,6 +138,21 @@ const args = require('yargs')
       .string('amount')
       .demand('amount');
   }, v => createOrder('sell', v))
+  .command('trailsell', 'Create a trailing sell monitor', sub => {
+    return sub
+      .describe('amount', 'The amount to sell if hit the limit')
+      .number('amount')
+      .demand('amount')
+      .describe('trail', 'The percentage at which to trail the moving average')
+      .number('trail')
+      .default('trail', 5.0)
+      .describe('smaperiods', 'The number of periods to compute the current price')
+      .number('smaperiods')
+      .default('smaperiods', 90)
+      .describe('offsetprice', 'The percentage at which to offset the price of the stop')
+      .number('offsetprice')
+      .default('offsetprice', 1.0);
+  }, trailingSell)
   .command('help <command>', 'Show help for command', {}, () => args.showHelp())
   .demandCommand()
   .recommendCommands();
