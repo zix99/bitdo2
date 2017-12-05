@@ -17,3 +17,20 @@ can update npm by running `npm update -g npm`.
 ```bash
 npm install -g bitdo2
 ```
+
+## Configuration
+
+You will need a file `bitdo.conf` that contains your exchange configuration.
+
+It should look something like this (Fill in your own secrets):
+```yaml
+exchanges:
+  gdax:
+    passphrase: xxx
+    key: yyy
+    b64secret: zzz
+  bittrex:
+    apikey: www
+    apisecret: ddd
+verbose: false
+```
