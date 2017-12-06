@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "A cryptocurrency order-rule executor",
   "repository": "zix99/bitdo2",
-  "main": "ui.js",
+  "main": "index.js",
   "scripts": {
     "start:ui": "node ui.js",
     "dev:ui": "nodemon ui.js",
