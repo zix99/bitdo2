@@ -42,6 +42,23 @@ Exchange.prototype.getHoldings = function getHoldings() {
     .map(holding => _.assign({ exchange: this, updatedAt: new Date() }, holding));
 };
 
+// Gets a single getHoldings()
+// Will use impl.getHolding() if available, otherwise it will get all and filter
+Exchange.prototype.getHolding = function getHolding(currency) {
+  if (this._impl.getHolding) {
+    return this._impl.getHolding(currency)
+      .then(holding => _.assign({ exchange: this, updateAt: new Date() }, holding));
+  }
+
+  return this.getHoldings()
+    .then(holdings => {
+      const match = _.find(holdings, x => x.currency === currency);
+      if (!match)
+        throw new Error(`Unable to find holdings for currency ${currency}`);
+      return match;
+    });
+};
+
 Exchange.prototype.getOrders = function getOrders() {
   /*
   [{

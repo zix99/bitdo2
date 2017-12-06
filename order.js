@@ -49,17 +49,44 @@ function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
   });
 }
 
+// Ability to resolve "special" prices (like percentages and 'all')
+function computeRelativeAmount(amount, relative) {
+  if (amount.toUpperCase() === 'ALL')
+    return relative;
+  if (amount.endsWith('%')) {
+    const percentage = parseFloat(amount.substr(0, amount.length - 1)) / 100.0;
+    return parseFloat(relative) * percentage;
+  }
+  return amount;
+}
+
+function getCurrentProductStats(exchange, symbol) {
+  return exchange.getHolding(symbol)
+    .catch(() => {})
+    .then(holding => {
+      log.info(`Current ${symbol} stats:`);
+      log.info(`  Balance:   ${holding.balance}`);
+      log.info(`  Available: ${holding.available}`);
+      return holding;
+    });
+}
+
 function createOrder(side, args) {
   const product = parsers.parseProduct(args.product);
   log.info(`Creating ${side} order for ${args.amount} on ${product.exchange}:${product.symbol}-${product.relation} at ${args.price}...`);
 
   const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
-  return exchange.createLimitOrder(side, product.symbol, product.relation, args.amount, args.price)
-    .then(order => {
-      log.info(`Order successfully created with id ${order.id}`);
-      if (!args.notrack)
-        return waitForOrderFill(exchange, order.id, args.pollsecs);
-      return order;
+  return getCurrentProductStats(exchange, product.symbol)
+    .then(holding => {
+      const resolvedAmount = computeRelativeAmount(args.amount, holding.available);
+      log.info(`Creating ${side} @ ${args.price} #${resolvedAmount}...`);
+      return exchange.createLimitOrder(side, product.symbol, product.relation, resolvedAmount, args.price)
+        .then(order => {
+          log.info(`Order successfully created with id ${order.id}`);
+          if (!args.notrack)
+            return waitForOrderFill(exchange, order.id, args.pollsecs);
+          return order;
+        });
     });
 }
 
@@ -125,7 +152,7 @@ const args = require('yargs')
       .describe('price', 'Price at which to buy product')
       .string('price')
       .demand('price')
-      .describe('amount', 'Amount of product to buy')
+      .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
       .string('amount')
       .demand('amount');
   }, v => createOrder('buy', v))
@@ -134,7 +161,7 @@ const args = require('yargs')
       .describe('price', 'Price at which to buy product')
       .string('price')
       .demand('price')
-      .describe('amount', 'Amount of product to buy')
+      .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
       .string('amount')
       .demand('amount');
   }, v => createOrder('sell', v))
