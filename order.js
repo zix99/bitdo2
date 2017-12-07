@@ -83,40 +83,34 @@ function getCurrentProductStats(exchange, symbol) {
     });
 }
 
-function createOrder(side, args) {
-  const product = parsers.parseProduct(args.product);
-  log.info(`Creating ${side} order for ${args.amount} on ${product.exchange}:${product.symbol}-${product.relation} at ${args.price}...`);
-
-  const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
-  return getCurrentProductStats(exchange, product.symbol)
+function createExchangeOrder(exchange, side, parsedProduct, amount, price, args = {}) {
+  log.info(`Creating ${side} order for ${amount} on ${parsedProduct.exchange}:${parsedProduct.symbol}-${parsedProduct.relation} at ${price}...`);
+  return getCurrentProductStats(exchange, parsedProduct.symbol)
     .then(holding => {
-      const resolvedAmount = computeRelativeAmount(args.amount, holding.available);
+      const resolvedAmount = computeRelativeAmount(amount, holding.available);
 
       if (resolvedAmount <= 0) {
         log.warn('Resolved amount is 0, cannot create order');
         process.exit(1);
       }
 
-      log.info(`Creating ${side} @ ${args.price} #${resolvedAmount}...`);
-      return exchange.createLimitOrder(side, product.symbol, product.relation, resolvedAmount, args.price)
+      log.info(`Creating ${side} @ ${price} #${resolvedAmount}...`);
+      return exchange.createLimitOrder(side, parsedProduct.symbol, parsedProduct.relation, resolvedAmount, price)
         .then(order => {
           log.info(`Order successfully created with id ${order.id}`);
           if (!args.notrack)
-            return waitForOrderFill(exchange, order.id, args.pollsecs);
+            return waitForOrderFill(exchange, order.id, args.pollsecs || 10);
           return order;
         });
     });
 }
 
-function cmdCreateOrder(side, args) {
-  return createOrder(side, {
-    product: args.product,
-    amount: args.amount,
-    price: args.price,
-    notrack: args.notrack,
-    pollsecs: args.pollsecs || 10,
-  });
+function createOrder(side, args) {
+  const product = parsers.parseProduct(args.product);
+  const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
+  return createExchangeOrder(exchange, side, product, args.amount, args.price, args);
 }
+
 
 function trailingSell(args) {
   const product = parsers.parseProduct(args.product);
@@ -146,9 +140,7 @@ function trailingSell(args) {
 
             if (ticker.price <= stopTrigger) {
               log.warn(`Ticker ${ticker.price} is less than trigger price of ${stopTrigger}.  Creating sell order at ${stopLimit}`);
-              createOrder('sell', _.assign(args, {
-                price: stopLimit,
-              }));
+              createExchangeOrder(exchange, 'sell', product, args.amount, stopLimit, args);
               return true; // We're done here
             }
             return null;
@@ -182,7 +174,7 @@ const args = require('yargs')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
       .string('amount')
       .demand('amount');
-  }, v => cmdCreateOrder('buy', v))
+  }, v => createOrder('buy', v))
   .command('sell', 'Create a sell order', sub => {
     return sub
       .describe('price', 'Price at which to buy product')
@@ -191,7 +183,7 @@ const args = require('yargs')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
       .string('amount')
       .demand('amount');
-  }, v => cmdCreateOrder('sell', v))
+  }, v => createOrder('sell', v))
   .command('trailsell', 'Create a trailing sell monitor', sub => {
     return sub
       .describe('amount', 'The amount to sell if hit the limit')
