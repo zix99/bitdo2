@@ -1,5 +1,7 @@
 const Promise = require('bluebird');
 
+/* eslint no-unused-vars: off */
+
 module.exports = (config) => ({
   getHoldings() {
     return Promise.resolve([]);

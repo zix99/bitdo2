@@ -5,12 +5,13 @@
   "repository": "zix99/bitdo2",
   "main": "index.js",
   "scripts": {
-    "start:ui": "node ui.js",
+    "ui": "node ui.js",
     "dev:ui": "nodemon ui.js",
     "lint": "eslint .",
     "release": "npm version patch && git push --tags && npm publish",
     "postinstall": "./scripts/postinstall.sh",
-    "test": "mocha --recursive tests/"
+    "test": "npm run lint && npm run test:unit",
+    "test:unit" : "mocha --recursive tests/"
   },
   "bin": {
     "bitdo-ui": "./ui.js",

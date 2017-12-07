@@ -1,0 +1,3 @@
+exchanges/bittrex/node_modules/**
+exchanges/gdax/node_modules/**
+exchanges/mock/node_modules/**

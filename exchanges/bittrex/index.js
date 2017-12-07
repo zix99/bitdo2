@@ -14,7 +14,7 @@ module.exports = exchangeOpts => {
     apisecret: null,
   }, exchangeOpts);
 
-  function createSignature(uri, nonce) {
+  function createSignature(uri) {
     const hmac = crypto.createHmac('sha512', config.apisecret);
     return hmac.update(uri).digest('hex');
   }

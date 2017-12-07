@@ -1,5 +1,5 @@
 const format = require('../../lib/format');
-const assert = require('chai').assert;
+const { assert } = require('chai');
 
 describe('#format', () => {
   it('should format normal number', () => {

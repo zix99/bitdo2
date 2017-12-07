@@ -15,7 +15,7 @@ module.exports = exchangeOpts => {
 
   function createSignedHeadersAsync(epoch, method, uri, serializedBody) {
     return new Promise((resolve, reject) => {
-      const hmac = crypto.createHmac('sha256', new Buffer(config.b64secret, 'base64'));
+      const hmac = crypto.createHmac('sha256', Buffer.from(config.b64secret, 'base64'));
       hmac.on('readable', () => {
         const data = hmac.read();
         if (data) {

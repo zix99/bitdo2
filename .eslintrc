@@ -20,5 +20,6 @@
         "no-plusplus" : "off",
         "object-curly-newline" : "off",
         "no-mixed-operators" : "off",
+        "radix": "off",
     }
 }
