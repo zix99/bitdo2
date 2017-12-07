@@ -23,6 +23,26 @@ function intervalPromise(func, millis) {
 
 function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
   log.info(`Waiting for order to fill. Polling every ${frequencySecs}s...`);
+
+  let isCanceling = false;
+  process.on('SIGINT', () => {
+    if (isCanceling) {
+      log.warn('Forcing quit, operation may have not finished!');
+      process.exit(2); // force quit
+    }
+
+    isCanceling = true;
+    log.info(`Exit requested, canceling order: ${orderId}...`);
+    exchange.cancelOrder(orderId)
+      .then(() => {
+        log.info('Order canceled, exiting..');
+        process.exit(0);
+      }).catch(err => {
+        log.warn(`Error canceling order! ${err.message}`);
+        process.exit(1);
+      });
+  });
+
   return new Promise((resolve, reject) => {
     const intv = setInterval(() => {
       log.info('Polling...');
