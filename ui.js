@@ -10,7 +10,7 @@ const log = require('./log');
 const format = require('./lib/format');
 const MethodTransport = require('./lib/methodtransport');
 const Promise = require('bluebird');
-const ConversionService = require('./services/conversions');
+const HoldingsService = require('./services/holdings');
 
 /* eslint arrow-body-style: off */
 
@@ -117,31 +117,13 @@ function directionalColor(val) {
 
 // Set up exchanges
 const exchanges = Exchange.createFromConfig(config.exchanges);
-const conversions = ConversionService(exchanges);
+const holdingsService = new HoldingsService(exchanges);
 
 const HOLDING_DELTA_HISTORY = {};
-function decorateHolding(holding) {
-  return Promise.all([
-    conversions.getRate(holding.currency, 'BTC').catch(() => 0),
-    conversions.getRate(holding.currency, 'USD').catch(() => 0),
-  ]).spread((btc, usd) => {
-    return _.assign({
-      conversions: {
-        BTC: btc * holding.balance,
-        USD: usd * holding.balance,
-      },
-      ticker: {
-        USD: usd,
-      },
-    }, holding);
-  });
-}
 
 function updateHoldings() {
   log.info('Updating holdings...');
-  return Promise.map(exchanges, exchange => exchange.getHoldings())
-    .then(_.flatten)
-    .map(decorateHolding)
+  return holdingsService.getHoldings()
     .then(holdings => _.orderBy(holdings, h => h.conversions.USD, 'desc'))
     .then(holdings => {
       const sums = { BTC: 0, USD: 0 };
