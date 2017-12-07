@@ -46,7 +46,7 @@ const DBHoldings = db.define('holdings', {
 
 function scrapeHoldings() {
   log.info('Fetching holdings...');
-  holdings.getHoldings()
+  return holdings.getHoldings()
     .map(holding => {
       log.info(`Holding: ${holding.balance} of ${holding.currency}`);
       return DBHoldings.create({
