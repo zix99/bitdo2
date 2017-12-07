@@ -1,5 +1,9 @@
 # BitDo2
 
+[![Build Status](https://travis-ci.org/zix99/bitdo2.svg?branch=master)](https://travis-ci.org/zix99/bitdo2)
+[![npm](https://img.shields.io/npm/v/bitdo2.svg)](https://www.npmjs.com/package/bitdo2)
+[![npm](https://img.shields.io/npm/l/bitdo2.svg)](https://www.npmjs.com/package/bitdo2)
+
 > NOTE: BitDo2 is still under development, and can't execute rules quite yet.  It can display and track your holding history to a local database.  Please wait a little bit longer until it can execute rules.
 
 A cryptocurrency automated trader (not an intelligent trader!) and set of utilities.
@@ -34,3 +38,76 @@ exchanges:
     apisecret: ddd
 verbose: false
 ```
+
+# Usage
+
+Along with being a platform library, there are several utilities you can use that ship with bitdo2.
+
+## Using as a Library
+
+By default, you can use bitdo2 as a library in your own applications.  It exports the common exchange abstraction,
+so you can operate on various exchanges without having to worry about their specific APIs.
+
+eg.
+```js
+const bitdo2 = require('bitdo2');
+bitdo2.createExchange('gdax', {... config ...});
+
+OR
+
+bitdo2.createFromConfig({
+  gdax: {
+    ...
+  },
+  bittrex: {
+    ...
+  }
+});
+```
+
+## UI
+
+Run: `bitdo2-ui`
+
+Make sure you have configuration in the current directory.
+
+You will be presented with a UI showing your current holdings and orders.
+
+## Order
+
+Run: `bitdo2-order --help`
+
+This allows you to execute buy/sell/trail orders via command line on any configured exchanges.
+
+**DO SO AT YOUR OWN RISK!**
+
+## Recorder
+
+Run: `bitdo2-recorder`
+
+This will (by default) poll your holdings in exchanges and write them to a sqlite DB so you can track them over time.
+
+Uses *Sequelize* to write to DB, so can use any database it supports (mysql, postgres, etc)
+
+# License
+
+Copyright (c) 2017 Christopher LaPointe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
