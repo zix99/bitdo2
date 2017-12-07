@@ -119,6 +119,8 @@ function trailingSell(args) {
               return true; // We're done here
             }
             return null;
+          }).catch(err => {
+            log.warn(`Error polling trailing sell: ${err.message}`);
           });
       }, args.pollsecs * 1000);
     });
