@@ -108,6 +108,16 @@ function createOrder(side, args) {
     });
 }
 
+function cmdCreateOrder(side, args) {
+  return createOrder(side, {
+    product: args.product,
+    amount: args.amount,
+    price: args.price,
+    notrack: args.notrack,
+    pollsecs: args.pollsecs || 10,
+  });
+}
+
 function trailingSell(args) {
   const product = parsers.parseProduct(args.product);
   const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
@@ -136,12 +146,9 @@ function trailingSell(args) {
 
             if (ticker.price <= stopTrigger) {
               log.warn(`Ticker ${ticker.price} is less than trigger price of ${stopTrigger}.  Creating sell order at ${stopLimit}`);
-              exchange.createLimitOrder('sell', product.symbol, product.relation, args.amount, stopLimit)
-                .then(order => {
-                  if (!args.notrack)
-                    return waitForOrderFill(exchange, order.id, args.pollsecs);
-                  return order;
-                });
+              createOrder('sell', _.assign(args, {
+                price: stopLimit,
+              }));
               return true; // We're done here
             }
             return null;
@@ -175,7 +182,7 @@ const args = require('yargs')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
       .string('amount')
       .demand('amount');
-  }, v => createOrder('buy', v))
+  }, v => cmdCreateOrder('buy', v))
   .command('sell', 'Create a sell order', sub => {
     return sub
       .describe('price', 'Price at which to buy product')
@@ -184,7 +191,7 @@ const args = require('yargs')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
       .string('amount')
       .demand('amount');
-  }, v => createOrder('sell', v))
+  }, v => cmdCreateOrder('sell', v))
   .command('trailsell', 'Create a trailing sell monitor', sub => {
     return sub
       .describe('amount', 'The amount to sell if hit the limit')
