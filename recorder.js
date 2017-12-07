@@ -56,6 +56,8 @@ function scrapeHoldings() {
         amountBtc: holding.conversions.BTC,
         amountUsd: holding.conversions.USD,
       });
+    }).catch(err => {
+      log.warn(`Error while scraping holdings: ${err.message}`);
     });
 }
 
