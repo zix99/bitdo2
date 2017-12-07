@@ -30,4 +30,18 @@ if (!config.noredirect) {
   };
 }
 
+log.enableConsole = function enableConsole(level = 'debug') {
+  if (log.__enabledConsole)
+    return log;
+
+  log.__enabledConsole = true;
+  log.add(winston.transports.Console, {
+    colorize: true,
+    timestamp: true,
+    prettyPrint: true,
+    level,
+  });
+  return log;
+};
+
 module.exports = log;

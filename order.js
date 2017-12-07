@@ -1,17 +1,9 @@
 #!/usr/bin/env node
 const config = require('./config');
 const Exchanges = require('./exchanges');
-const log = require('./log');
-const winston = require('winston');
+const log = require('./log').enableConsole();
 const parsers = require('./lib/parsers');
 const _ = require('lodash');
-
-log.add(winston.transports.Console, {
-  colorize: true,
-  timestamp: true,
-  prettyPrint: true,
-  level: 'debug',
-});
 
 function intervalPromise(func, millis) {
   return new Promise((resolve, reject) => {
@@ -51,9 +43,9 @@ function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
 
 // Ability to resolve "special" prices (like percentages and 'all')
 function computeRelativeAmount(amount, relative) {
-  if (amount.toUpperCase() === 'ALL')
+  if (`${amount}`.toUpperCase() === 'ALL')
     return relative;
-  if (amount.endsWith('%')) {
+  if (`${amount}`.endsWith('%')) {
     const percentage = parseFloat(amount.substr(0, amount.length - 1)) / 100.0;
     return parseFloat(relative) * percentage;
   }
