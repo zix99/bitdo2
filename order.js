@@ -91,6 +91,12 @@ function createOrder(side, args) {
   return getCurrentProductStats(exchange, product.symbol)
     .then(holding => {
       const resolvedAmount = computeRelativeAmount(args.amount, holding.available);
+
+      if (resolvedAmount <= 0) {
+        log.warn('Resolved amount is 0, cannot create order');
+        process.exit(1);
+      }
+
       log.info(`Creating ${side} @ ${args.price} #${resolvedAmount}...`);
       return exchange.createLimitOrder(side, product.symbol, product.relation, resolvedAmount, args.price)
         .then(order => {
