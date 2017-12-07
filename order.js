@@ -132,9 +132,15 @@ function trailingSell(args) {
             const stopLimit = stopTrigger - stopTrigger * (args.offsetprice / 100.0);
 
             // add to price history after computing the mean
-            priceHistory.push(ticker.price);
-            if (priceHistory.length > args.smaperiods)
-              priceHistory.shift();
+            if (priceHistory.length === 0) {
+              // prefill
+              for (let i = 0; i < args.smaperiods; i++)
+                priceHistory.push(ticker.price);
+            } else {
+              priceHistory.push(ticker.price);
+              if (priceHistory.length > args.smaperiods)
+                priceHistory.shift();
+            }
 
             log.debug(`Price ${ticker.price} < ${stopTrigger}?`);
 
