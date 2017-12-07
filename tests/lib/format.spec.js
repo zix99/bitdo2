@@ -6,7 +6,7 @@ describe('#format', () => {
     assert.equal(format.number(123.456), '123.4560');
   });
   it('should format a small number', () => {
-    assert.equal(format.number(0.0000022), 's22');
+    assert.equal(format.number(0.0000022), 's220');
   });
   it('should return short formatted number', () => {
     assert.equal(format.short(22.123456), '22.12');
