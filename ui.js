@@ -193,7 +193,7 @@ function updateOrders() {
           ];
         }),
       ]);
-      rows.unshift(['', 'Created', 'Exchange', 'Product', 'Side', 'Type', 'Size', 'Price', 'Fee']);
+      rows.unshift(['', 'Created', 'Exchange', 'Product', 'Side', 'Type', 'Size', 'Exec Price', 'Fee']);
       orderTable.setData(rows);
       screen.render();
     })
@@ -204,11 +204,28 @@ function updateOrders() {
 
 
 // Update
+let isUpdating = false;
 function update() {
-  updateHoldings();
-  updateOrders();
+  if (isUpdating) {
+    log.warn('Already updating, will not update again');
+    return;
+  }
+  isUpdating = true;
+
+  Promise.all([
+    updateHoldings(),
+    updateOrders(),
+  ]).then(() => {
+    log.info('Update complete');
+  }).catch(err => {
+    log.warn(`Error updating: ${err.message}`);
+  }).finally(() => {
+    isUpdating = false;
+  });
 }
 setInterval(() => {
   update();
 }, 60000);
 update();
+
+screen.key(['f5', 'r'], update);
