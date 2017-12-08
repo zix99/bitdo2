@@ -23,7 +23,7 @@ module.exports = exchanges => {
 
           const flipkey = `${target}:${currency}`;
           if (_.has(markets, flipkey))
-            return markets[flipkey].exchange.getTicker(currency, target).then(ret => 1.0 / ret.price);
+            return markets[flipkey].exchange.getTicker(target, currency).then(ret => 1.0 / ret.price);
 
           throw new Error(`Unable to translate market ${mainkey}`);
         });
