@@ -18,7 +18,7 @@ function update() {
     .then(holdings => _.orderBy(holdings, h => h.conversions.USD, 'desc'))
     .then(holdings => _.filter(holdings, h => h.balance > 0))
     .then(holdings => {
-      web.pushData('holdings', {
+      web.graph('holdings', {
         type: 'bar',
         data: {
           labels: _.map(holdings, 'currency'),
@@ -34,4 +34,5 @@ function update() {
     });
 }
 
-setInterval(update, 5000);
+setInterval(update, 30 * 1000);
+update();

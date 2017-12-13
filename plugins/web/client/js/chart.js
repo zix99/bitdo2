@@ -73,3 +73,11 @@ io.on('graph', ({ key, data }) => {
     chart.update();
   }
 });
+
+io.on('deleteGraph', ({ key }) => {
+  if (_.has(graphs, key)) {
+    graphs[key].chart.destroy();
+    graphs[key].canvas.remove();
+    delete graphs[key];
+  }
+});

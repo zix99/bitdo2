@@ -5,9 +5,12 @@ const path = require('path');
 const hbs = require('hbs');
 const http = require('http');
 const socketio = require('socket.io');
+const _ = require('lodash');
 require('./middleware/hbsHelpers')(hbs);
 
 const BOOT_DATE = ~~new Date();
+
+const GRAPHS = {};
 
 module.exports = (context = {}) => {
   const PORT = context.port || 8080;
@@ -26,6 +29,9 @@ module.exports = (context = {}) => {
     sock.emit('hello', {
       boot: BOOT_DATE,
     });
+    _.each(GRAPHS, (data, key) => {
+      io.emit('graph', { key, data });
+    });
   });
 
   app.get('/', (req, res) => {
@@ -41,8 +47,14 @@ module.exports = (context = {}) => {
   });
 
   return {
-    pushData(key, data) {
+    graph(key, data) {
+      GRAPHS[key] = data;
       io.emit('graph', { key, data });
+    },
+
+    deleteGraph(key) {
+      delete GRAPHS[key];
+      io.emit('deleteGraph', { key });
     },
   };
 };
