@@ -7,7 +7,9 @@ const http = require('http');
 const socketio = require('socket.io');
 require('./middleware/hbsHelpers')(hbs);
 
-module.exports = context => {
+const BOOT_DATE = ~~new Date();
+
+module.exports = (context = {}) => {
   const PORT = context.port || 8080;
 
   const app = express();
@@ -19,8 +21,11 @@ module.exports = context => {
   app.use(express.static(path.join(__dirname, 'dist')));
   hbs.registerPartials(`${__dirname}/views/partials`);
 
-  io.on('connection', () => {
+  io.on('connection', (sock) => {
     log.info('Socket connected');
+    sock.emit('hello', {
+      boot: BOOT_DATE,
+    });
   });
 
   app.get('/', (req, res) => {
@@ -32,7 +37,7 @@ module.exports = context => {
   });
 
   server.listen(PORT, () => {
-    log.info(`Web plugin started on port ${PORT}`);
+    log.info(`Web plugin started on port ${PORT}: http://localhost:${PORT}`);
   });
 
   return {

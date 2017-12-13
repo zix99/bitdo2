@@ -11,7 +11,7 @@ Uses the web plugin to generate your own custom dashboard
 
 const exchanges = Exchanges.createFromConfig(config.exchanges);
 const holdingsService = new HoldingsService(exchanges);
-const web = Web({});
+const web = Web();
 
 function update() {
   holdingsService.getHoldings()

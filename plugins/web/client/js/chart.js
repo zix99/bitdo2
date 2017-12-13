@@ -25,16 +25,31 @@ const CHARTJS_DARK = {
   },
 };
 
+let bootVersion = null;
+io.on('hello', payload => {
+  if (!bootVersion) {
+    bootVersion = payload.boot;
+    console.log(`Set version to ${bootVersion}`);
+  } else if (bootVersion !== payload.boot) {
+    console.log('Refreshing page, outdated version');
+    window.location.reload();
+  }
+});
+
 io.on('graph', ({ key, data }) => {
   console.log(`Updating ${key}`);
 
   if (!_.has(graphs, key)) {
     console.log(`Generating new chart with key ${key}`);
-    const ele = document.createElement('canvas');
-    ele.className = 'graph';
+    const eleContainer = document.createElement('div');
+    eleContainer.className = 'graph';
+    container.appendChild(eleContainer);
 
-    container.appendChild(ele);
-    const chart = new Chart(ele.getContext('2d'), _.merge({
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute('width', '30%');
+    eleContainer.appendChild(canvas);
+
+    const chart = new Chart(canvas.getContext('2d'), _.merge({
       type: 'bar',
       options: {
         title: {
@@ -43,13 +58,14 @@ io.on('graph', ({ key, data }) => {
         },
         responsive: true,
         legend: {
-          position: 'top',
+          position: 'bottom',
+          display: false,
         },
       },
     }, CHARTJS_DARK, data));
     graphs[key] = {
       chart,
-      ele,
+      canvas,
     };
   } else {
     const { chart } = graphs[key];
