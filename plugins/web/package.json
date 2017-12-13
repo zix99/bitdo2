@@ -1,0 +1,36 @@
+{
+  "name": "bitdo2-web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon standalone.js",
+    "gulp": "gulp",
+    "gulp:dev": "gulp watch",
+    "webpack": "webpack",
+    "webpack:dev": "webpack --watch",
+    "postinstall": "npm run gulp && npm run webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.17.1",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "bluebird": "^3.5.1",
+    "express": "^4.16.2",
+    "gulp": "^3.9.1",
+    "gulp-clean-css": "^3.9.0",
+    "gulp-less": "^3.3.2",
+    "hbs": "^4.0.1",
+    "lodash": "^4.17.4",
+    "socket.io": "^2.0.4",
+    "socket.io-client": "^2.0.4",
+    "webpack": "^3.10.0",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.12.5"
+  }
+}
