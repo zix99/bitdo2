@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-const Sequelize = require('sequelize');
 const log = require('./log');
 const HoldingsService = require('./services/holdings');
 const Exchanges = require('./exchanges');
 const config = require('./config');
+const DB = require('./lib/db');
 
 /*
 This script will record holdings over time to a database.
@@ -27,29 +27,14 @@ log.enableConsole(args.verbose ? 'debug' : 'info');
 const exchanges = Exchanges.createFromConfig(config.exchanges);
 const holdings = new HoldingsService(exchanges);
 
-const db = new Sequelize(args.db, {
-  logging: txt => log.debug(txt),
-});
-
-const DBHoldings = db.define('holdings', {
-  exchange: Sequelize.STRING,
-  symbol: Sequelize.STRING,
-  amount: Sequelize.DOUBLE,
-  amountBtc: Sequelize.DOUBLE,
-  amountUsd: Sequelize.DOUBLE,
-}, {
-  indexes: [
-    { fields: ['exchange', 'symbol'] },
-    { fields: ['createdAt'] },
-  ],
-});
+const { Holdings, db } = DB(args.db);
 
 function scrapeHoldings() {
   log.info('Fetching holdings...');
   return holdings.getHoldings()
     .map(holding => {
       log.info(`Holding: ${holding.balance} of ${holding.currency}`);
-      return DBHoldings.create({
+      return Holdings.create({
         exchange: holding.exchange.name.toUpperCase(),
         symbol: holding.currency.toUpperCase(),
         amount: holding.balance,
