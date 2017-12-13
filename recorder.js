@@ -31,6 +31,7 @@ const { Holdings, db } = DB(args.db);
 
 function scrapeHoldings() {
   log.info('Fetching holdings...');
+  const ts = new Date();
   return holdings.getHoldings()
     .map(holding => {
       log.info(`Holding: ${holding.balance} of ${holding.currency}`);
@@ -40,6 +41,7 @@ function scrapeHoldings() {
         amount: holding.balance,
         amountBtc: holding.conversions.BTC,
         amountUsd: holding.conversions.USD,
+        ts,
       });
     }).catch(err => {
       log.warn(`Error while scraping holdings: ${err.message}`);

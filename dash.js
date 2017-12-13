@@ -4,11 +4,23 @@ const Exchanges = require('./exchanges');
 const config = require('./config');
 const _ = require('lodash');
 const HoldingsService = require('./services/holdings');
+const DB = require('./lib/db');
+const moment = require('moment');
+const log = require('./log');
+
+log.enableConsole();
 
 /*
 Uses the web plugin to generate your own custom dashboard
 */
 
+const args = require('yargs')
+  .describe('db', 'Database URL')
+  .string('db')
+  .default('db', 'sqlite://db.sqlite')
+  .argv;
+
+const { Holdings } = DB(args.db);
 const exchanges = Exchanges.createFromConfig(config.exchanges);
 const holdingsService = new HoldingsService(exchanges);
 const web = Web();
@@ -32,6 +44,41 @@ function update() {
         },
       });
     });
+
+  Holdings.findSumOverTime({
+    where: {
+      createdAt: { $gt: moment().subtract(7, 'day').toDate() },
+    },
+  }).then(results => {
+    if (results.length > 0) {
+      web.graph('Long-term-USD', {
+        type: 'line',
+        data: {
+          labels: _.map(results, 'ts'),
+          datasets: [{
+            label: 'USD',
+            fill: true,
+            pointRadius: 0,
+            backgroundColor: 'rgba(255,0,0,0.5)',
+            borderColor: 'rgba(255,0,0,1.0)',
+            borderWidth: 1,
+            data: _.map(results, x => x.get('sumUsd')),
+          }],
+        },
+        options: {
+          scales: {
+            xAxes: [{
+              type: 'time',
+              distribution: 'series',
+              ticks: {
+                source: 'labels',
+              },
+            }],
+          },
+        },
+      });
+    }
+  });
 }
 
 setInterval(update, 30 * 1000);
