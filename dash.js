@@ -25,6 +25,8 @@ const exchanges = Exchanges.createFromConfig(config.exchanges);
 const holdingsService = new HoldingsService(exchanges);
 const web = Web();
 
+const tickers = {};
+
 function update() {
   holdingsService.getHoldings()
     .then(holdings => _.orderBy(holdings, h => h.conversions.USD, 'desc'))
@@ -42,6 +44,76 @@ function update() {
             data: _.map(holdings, 'conversions.USD'),
           }],
         },
+      });
+
+      _.each(holdings, ({ currency, ticker, balance }) => {
+        if (currency === 'USD')
+          return;
+
+        if (!tickers[currency]) {
+          tickers[currency] = {
+            prices: [],
+          };
+        }
+        const currencyTicker = tickers[currency];
+
+        currencyTicker.prices.push({
+          ts: new Date(),
+          price: ticker.USD,
+          balance,
+        });
+
+        web.graph(`holdings-${currency}`, {
+          type: 'bar',
+          data: {
+            labels: _.map(currencyTicker.prices, 'ts'),
+            datasets: [{
+              type: 'line',
+              label: 'USD-Price',
+              fill: true,
+              pointRadius: 0,
+              backgroundColor: 'rgba(255,0,0,0.5)',
+              borderColor: 'rgba(255,0,0,1.0)',
+              data: _.map(currencyTicker.prices, 'price'),
+              yAxisID: 'y-axis-1',
+            }, {
+              type: 'bar',
+              label: 'Balance',
+              fill: true,
+              borderWidth: 1,
+              backgroundColor: 'rgba(127,127,127,0.2)',
+              borderColor: 'rgba(127,127,127,0.5)',
+              data: _.map(currencyTicker.prices, 'balance'),
+              yAxisID: 'y-axis-2',
+            }],
+          },
+          options: {
+            stacked: false,
+            scales: {
+              xAxes: [{
+                type: 'time',
+                distribution: 'series',
+                ticks: {
+                  source: 'labels',
+                },
+              }],
+              yAxes: [{
+                type: 'linear',
+                display: true,
+                position: 'left',
+                id: 'y-axis-1',
+              }, {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                id: 'y-axis-2',
+                gridLines: {
+                  drawOnChartArea: false,
+                },
+              }],
+            },
+          },
+        });
       });
     });
 
