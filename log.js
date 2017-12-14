@@ -15,21 +15,6 @@ const log = new (winston.Logger)({
   ],
 });
 
-if (!config.noredirect) {
-  /* eslint no-console: off */
-  console.log = function consoleLog(txt) {
-    log.info(txt);
-  };
-
-  console.dir = function consoleDir(obj) {
-    log.debug(JSON.stringify(obj));
-  };
-
-  console.err = function consoleError(txt) {
-    log.err(txt);
-  };
-}
-
 log.enableConsole = function enableConsole(level = 'debug') {
   if (log.__enabledConsole)
     return log;
