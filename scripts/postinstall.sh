@@ -12,3 +12,7 @@ popd
 pushd exchanges/mock
 npm install
 popd
+
+pushd plugins/web
+npm install
+popd
