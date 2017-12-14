@@ -17,7 +17,8 @@
   "bin": {
     "bitdo-ui": "./ui.js",
     "bitdo-order": "./order.js",
-    "bitdo-recorder": "./recorder.js"
+    "bitdo-recorder": "./recorder.js",
+    "bitdo-dash": "./dash.js"
   },
   "keywords": [
     "cryptocurrency",

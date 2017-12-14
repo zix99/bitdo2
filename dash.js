@@ -17,7 +17,9 @@ Uses the web plugin to generate your own custom dashboard
 const args = require('yargs')
   .describe('db', 'Database URL')
   .string('db')
-  .default('db', 'sqlite://db.sqlite')
+  .default('db', config.db || 'sqlite://db.sqlite')
+  .env('BITDO')
+  .epilog('Environment variables settable with prefix BITDO_')
   .argv;
 
 const { Holdings } = DB(args.db);

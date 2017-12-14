@@ -12,7 +12,7 @@ Defaults to local sqlite DB
 
 const args = require('yargs')
   .describe('db', 'Database connections tring')
-  .default('db', 'sqlite://db.sqlite')
+  .default('db', config.db || 'sqlite://db.sqlite')
   .describe('interval', 'Number of minutes between holding fetchings')
   .number('interval')
   .default('interval', 5)
@@ -20,6 +20,8 @@ const args = require('yargs')
   .describe('verbose', 'Display debug info')
   .alias('verbose', 'v')
   .boolean('verbose')
+  .env('BITDO')
+  .epilog('Environment variables settable with prefix BITDO_')
   .argv;
 
 log.enableConsole(args.verbose ? 'debug' : 'info');
