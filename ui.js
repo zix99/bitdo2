@@ -12,6 +12,8 @@ const MethodTransport = require('./lib/methodtransport');
 const Promise = require('bluebird');
 const HoldingsService = require('./services/holdings');
 
+log.overrideConsole();
+
 /* eslint arrow-body-style: off */
 
 const screen = blessed.Screen({

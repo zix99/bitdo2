@@ -29,4 +29,17 @@ log.enableConsole = function enableConsole(level = 'debug') {
   return log;
 };
 
+log.overrideConsole = function overrideConsole() {
+  /* eslint no-console: off */
+  console.log = function consoleLog(txt) {
+    log.info(txt);
+  };
+  console.dir = function consoleDir(obj) {
+    log.debug(JSON.stringify(obj));
+  };
+  console.err = function consoleError(txt) {
+    log.err(txt);
+  };
+};
+
 module.exports = log;

@@ -36,6 +36,9 @@ exchanges:
   bittrex:
     apikey: www
     apisecret: ddd
+  robinhood:
+    username: xxx
+    password: yyy
 verbose: false
 ```
 

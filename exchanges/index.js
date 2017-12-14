@@ -67,8 +67,8 @@ Exchange.prototype.getOrders = function getOrders() {
     price: order.price, (per unit)
     size: order.size,
     date: order.created_at,
-    type: order.type,
-    side: order.size,
+    type: order.type, // limit, market
+    side: order.side, // sell, buy
     fee: order.fill_fees,
     //META:
     exchange: this
