@@ -9,7 +9,7 @@
     "dev:ui": "nodemon ui.js",
     "dev:dash": "nodemon dash.js",
     "lint": "eslint .",
-    "release": "npm version patch && git push --tags && npm publish",
+    "release": "npm version patch && git push --all && npm publish",
     "postinstall": "./scripts/postinstall.sh",
     "test": "npm run lint && npm run test:unit",
     "test:unit": "mocha --recursive tests/"
