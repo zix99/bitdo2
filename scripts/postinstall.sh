@@ -9,6 +9,10 @@ pushd exchanges/bittrex
 npm install
 popd
 
+pushd exchanges/robinhood
+npm install
+popd
+
 pushd exchanges/mock
 npm install
 popd
