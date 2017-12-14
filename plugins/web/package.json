@@ -7,7 +7,7 @@
     "dev": "nodemon standalone.js",
     "gulp": "gulp",
     "gulp:dev": "gulp watch",
-    "webpack": "webpack -p",
+    "webpack": "webpack",
     "webpack:dev": "webpack --watch",
     "postinstall": "npm run gulp && npm run webpack"
   },
