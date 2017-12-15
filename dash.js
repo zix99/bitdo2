@@ -99,6 +99,11 @@ function update() {
                 distribution: 'series',
                 ticks: {
                   source: 'labels',
+                  minRotation: 30,
+                  autoSkip: true,
+                },
+                time: {
+                  tooltipFormat: 'll HH:mm',
                 },
               }],
               yAxes: [{
@@ -148,6 +153,11 @@ function update() {
               distribution: 'series',
               ticks: {
                 source: 'labels',
+                minRotation: 30,
+                autoSkip: true,
+              },
+              time: {
+                tooltipFormat: 'll HH:mm',
               },
             }],
           },
