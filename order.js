@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+const Promise = require('bluebird');
 const config = require('./config');
 const Exchanges = require('./exchanges');
 const log = require('./log').enableConsole();
@@ -45,7 +46,7 @@ function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
 
   return new Promise((resolve, reject) => {
     const intv = setInterval(() => {
-      log.info('Polling...');
+      log.info(`Polling order ${orderId}...`);
       exchange.getOrder(orderId)
         .then(order => {
           if (order.settled) {
@@ -83,7 +84,7 @@ function getCurrentProductStats(exchange, symbol) {
     });
 }
 
-function createExchangeOrder(exchange, side, parsedProduct, amount, price, args = {}) {
+function createExchangeOrder(exchange, side, parsedProduct, amount, price, args = {}, spread = 0, spreadRatio = 0.00025) {
   log.info(`Creating ${side} order for ${amount} on ${parsedProduct.exchange}:${parsedProduct.symbol}-${parsedProduct.relation} at ${price}...`);
   return getCurrentProductStats(exchange, parsedProduct.symbol)
     .then(holding => {
@@ -95,8 +96,15 @@ function createExchangeOrder(exchange, side, parsedProduct, amount, price, args 
       }
 
       log.info(`Creating ${side} @ ${price} #${resolvedAmount}...`);
-      return exchange.createLimitOrder(side, parsedProduct.symbol, parsedProduct.relation, resolvedAmount, price)
-        .then(order => {
+      const orders = [];
+      for (let i = 0; i <= spread; i++) {
+        orders.push(exchange.createLimitOrder(side, parsedProduct.symbol, parsedProduct.relation, resolvedAmount / (spread * 2 + 1), price + price * spreadRatio * i));
+        if (i !== 0)
+          orders.push(exchange.createLimitOrder(side, parsedProduct.symbol, parsedProduct.relation, resolvedAmount / (spread * 2 + 1), price + price * spreadRatio * -i));
+      }
+
+      return Promise.all(orders)
+        .map(order => {
           log.info(`Order successfully created with id ${order.id}`);
           if (!args.notrack && !order.settled)
             return waitForOrderFill(exchange, order.id, args.pollsecs || 10);
@@ -108,7 +116,7 @@ function createExchangeOrder(exchange, side, parsedProduct, amount, price, args 
 function createOrder(side, args) {
   const product = parsers.parseProduct(args.product);
   const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange], { simulate: args.simulate });
-  return createExchangeOrder(exchange, side, product, args.amount, args.price, args);
+  return createExchangeOrder(exchange, side, product, args.amount, args.price, args, args.spread, args.spreadratio);
 }
 
 
@@ -179,20 +187,32 @@ const args = require('yargs')
   .command('buy', 'Create an order to buy a product', sub => {
     return sub
       .describe('price', 'Price at which to buy product')
-      .string('price')
+      .number('price')
       .demand('price')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
-      .string('amount')
-      .demand('amount');
+      .number('amount')
+      .demand('amount')
+      .describe('spread', 'Number of orders to spread buy across')
+      .number('spread')
+      .default('spread', 0)
+      .describe('spreadratio', 'Ratio to spread out orders in each spread')
+      .number('spreadratio')
+      .default('spreadratio', 0.00025);
   }, v => createOrder('buy', v))
   .command('sell', 'Create a sell order', sub => {
     return sub
       .describe('price', 'Price at which to buy product')
-      .string('price')
+      .number('price')
       .demand('price')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
-      .string('amount')
-      .demand('amount');
+      .number('amount')
+      .demand('amount')
+      .describe('spread', 'Number of orders to spread sell across')
+      .number('spread')
+      .default('spread', 0)
+      .describe('spreadratio', 'Ratio to spread out orders in each spread')
+      .number('spreadratio')
+      .default('spreadratio', 0.00025);
   }, v => createOrder('sell', v))
   .command('trailsell', 'Create a trailing sell monitor', sub => {
     return sub

@@ -136,12 +136,12 @@ function requireExchange(name, config) {
 
 module.exports = {
   createExchange(name, config, opts = {}) {
-    let exchange = new Exchange(name, requireExchange(name, config));
+    let exchange = requireExchange(name, config);
     if (opts.log || config.log)
       exchange = proxyLogger(exchange);
     if (opts.simulate || config.simulate)
       exchange = proxyOrderSimulate(exchange);
-    return exchange;
+    return new Exchange(name, exchange);
   },
 
   createFromConfig(configSet, opts = {}) {

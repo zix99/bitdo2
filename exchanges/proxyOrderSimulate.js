@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const moment = require('moment');
 const shortid = require('shortid');
+const memoize = require('memoizee');
 const log = require('../log');
 
 /* eslint no-unused-vars: off */
@@ -9,14 +10,18 @@ module.exports = impl => {
   const ORDERS = {};
   let BALANCE = 0;
 
+  const cachedGetTicker = memoize(impl.getTicker, { promise: true, maxAge: 1000 });
+
   /* eslint no-param-reassign: off */
   function evaluateOrder(order) {
     if (order.settled)
       return Promise.resolve(order); // already settled
 
+    log.info(`Evaluating order ${order.id}...`);
+
     const [currency, relation] = order.product.split('-');
 
-    return impl.getTicker(currency, relation)
+    return cachedGetTicker(currency, relation)
       .then(ticker => {
         if (order.side === 'buy' && order.price >= ticker.price) {
           log.info(`Simulating execution of buy for ${order.id}`);
@@ -78,10 +83,23 @@ module.exports = impl => {
       ORDERS[id] = order;
 
       return evaluateOrder(order)
-        .then(eOrder => ({
-          id,
-          settled: eOrder.settled,
-        }));
+        .then(eOrder => {
+          // Job to "evaluate" the order
+          if (!eOrder.settled) {
+            order.__interval = setInterval(() => {
+              evaluateOrder(order)
+                .then(e => {
+                  if (e.settled)
+                    clearInterval(e.__interval);
+                });
+            }, 10 * 1000);
+          }
+
+          return {
+            id,
+            settled: eOrder.settled,
+          };
+        });
     },
 
     cancelOrder(orderId) {
