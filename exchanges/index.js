@@ -134,6 +134,33 @@ class Exchange {
     return this._impl.cancelOrder(orderId)
       .then(ret => _.assign({ exchange: this, id: orderId }, ret));
   }
+
+  getOrderBook(currency, relation, bucketsize = 0.01) {
+    /*
+    Special note: Once this contract is returned, it will be bucketed and sorted
+    {
+      buys: [{
+        price: 123.11,  // Price point
+        size: 100.23,   // Total size/volume at this price point
+        orders: 1,      // Number of orders at this price point (default: 1)
+      }, ...],
+      sells: [...]      // Same data as buys
+    } */
+    function bucketData(data) {
+      const bucketed = _.groupBy(data, item => ~~(item.price / bucketsize) * bucketsize);
+      return _.map(bucketed, (items, bucket) => ({
+        price: parseFloat(bucket),
+        size: _.sumBy(items, 'size'),
+        orders: _.sumBy(items, x => x.orders || 1),
+      }));
+    }
+    return this._impl.getOrderBook(currency, relation, bucketsize)
+      .then(book => ({
+        buys: _.orderBy(bucketData(book.buys), x => x.price),
+        sells: _.orderBy(bucketData(book.sells), x => x.price),
+      }))
+      .then(ret => _.assign({ exchange: this, currency, relation }, ret));
+  }
 }
 
 /* eslint global-require: off */

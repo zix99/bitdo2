@@ -141,5 +141,19 @@ module.exports = exchangeOpts => {
       return executeRequest('DELETE', `/orders/${orderId}`)
         .then(() => ({}));
     },
+
+    getOrderBook(currency, relation) {
+      return executeRequest('GET', `/products/${currency}-${relation}/book?level=3`)
+        .then(data => ({
+          buys: _.map(data.bids, x => ({
+            price: parseFloat(x[0]),
+            size: parseFloat(x[1]),
+          })),
+          sells: _.map(data.asks, x => ({
+            price: parseFloat(x[0]),
+            size: parseFloat(x[1]),
+          })),
+        }));
+    },
   };
 };
