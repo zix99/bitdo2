@@ -70,7 +70,7 @@ bitdo2.createFromConfig({
 
 ## UI
 
-Run: `bitdo2-ui`
+Run: `bitdo-ui`
 
 Make sure you have configuration in the current directory.
 
@@ -78,7 +78,7 @@ You will be presented with a UI showing your current holdings and orders.
 
 ## Order
 
-Run: `bitdo2-order --help`
+Run: `bitdo-order --help`
 
 This allows you to execute buy/sell/trail orders via command line on any configured exchanges.
 
@@ -86,7 +86,7 @@ This allows you to execute buy/sell/trail orders via command line on any configu
 
 ## Recorder
 
-Run: `bitdo2-recorder`
+Run: `bitdo-recorder`
 
 This will (by default) poll your holdings in exchanges and write them to a sqlite DB so you can track them over time.
 
