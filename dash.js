@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+const Promise = require('bluebird');
 const Plugins = require('./plugins');
 const Exchanges = require('./exchanges');
 const config = require('./config');
@@ -35,7 +36,10 @@ function update() {
   holdingsService.getHoldings()
     .then(holdings => _.orderBy(holdings, h => h.conversions.USD, 'desc'))
     .then(holdings => _.filter(holdings, h => h.balance > 0))
-    .then(holdings => {
+    .then(holdings => [
+      holdings,
+      Promise.map(exchanges, exch => exch.getOrders()).then(_.flatten),
+    ]).spread((holdings, orders) => {
       plugins.graph('holdings', {
         type: 'bar',
         data: {
@@ -50,7 +54,7 @@ function update() {
         },
       });
 
-      _.each(holdings, ({ currency, ticker, balance }) => {
+      _.each(holdings, ({ currency, ticker, balance, exchange }) => {
         if (currency === 'USD')
           return;
 
@@ -67,7 +71,7 @@ function update() {
           balance,
         });
 
-        plugins.graph(`holdings-${currency}`, {
+        plugins.graph(`holdings-${exchange.name}-${currency}`, {
           type: 'bar',
           data: {
             labels: _.map(currencyTicker.prices, 'ts'),
@@ -89,10 +93,37 @@ function update() {
               borderColor: 'rgba(127,127,127,0.5)',
               data: _.map(currencyTicker.prices, 'balance'),
               yAxisID: 'y-axis-2',
+            }, {
+              type: 'line',
+              label: 'Buys',
+              backgroundColor: 'rgba(0,255,0,0.4)',
+              borderColor: 'rgba(0,255,0,0.8)',
+              data: _(orders)
+                .filter(o => o.product.substr(0, 3) === currency && o.exchange.name === exchange.name && o.status === 'F' && o.side === 'buy' && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
+                .map(o => ({ x: o.date, y: o.price })),
+              fill: true,
+              pointRadius: 10,
+              pointHoverRadius: 15,
+              showLine: false,
+            }, {
+              type: 'line',
+              label: 'Sells',
+              backgroundColor: 'rgba(128,0,255,0.4)',
+              borderColor: 'rgba(128,0,255,0.8)',
+              data: _(orders)
+                .filter(o => o.product.substr(0, 3) === currency && o.exchange.name === exchange.name && o.status === 'F' && o.side === 'sell' && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
+                .map(o => ({ x: o.date, y: o.price })),
+              fill: true,
+              pointRadius: 10,
+              pointHoverRadius: 15,
+              showLine: false,
             }],
           },
           options: {
             stacked: false,
+            title: {
+              text: `[${exchange.name}] ${currency}`,
+            },
             scales: {
               xAxes: [{
                 type: 'time',
