@@ -39,7 +39,8 @@ function update() {
     .then(holdings => [
       holdings,
       Promise.map(exchanges, exch => exch.getOrders()).then(_.flatten),
-    ]).spread((holdings, orders) => {
+    ])
+    .spread((holdings, orders) => {
       plugins.graph('holdings', {
         type: 'bar',
         data: {
@@ -99,7 +100,11 @@ function update() {
               backgroundColor: 'rgba(0,255,0,0.4)',
               borderColor: 'rgba(0,255,0,0.8)',
               data: _(orders)
-                .filter(o => o.product.substr(0, 3) === currency && o.exchange.name === exchange.name && o.status === 'F' && o.side === 'buy' && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
+                .filter(o => o.product.substr(0, 3) === currency
+                  && o.exchange.name === exchange.name
+                  && o.status === 'F'
+                  && o.side === 'buy'
+                  && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
                 .map(o => ({ x: o.date, y: o.price })),
               fill: true,
               pointRadius: 10,
@@ -111,7 +116,11 @@ function update() {
               backgroundColor: 'rgba(128,0,255,0.4)',
               borderColor: 'rgba(128,0,255,0.8)',
               data: _(orders)
-                .filter(o => o.product.substr(0, 3) === currency && o.exchange.name === exchange.name && o.status === 'F' && o.side === 'sell' && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
+                .filter(o => o.product.substr(0, 3) === currency
+                  && o.exchange.name === exchange.name
+                  && o.status === 'F'
+                  && o.side === 'sell'
+                  && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
                 .map(o => ({ x: o.date, y: o.price })),
               fill: true,
               pointRadius: 10,
