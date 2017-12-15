@@ -75,8 +75,10 @@ function computeRelativeAmount(amount, relative) {
 
 function getCurrentProductStats(exchange, symbol) {
   return exchange.getHolding(symbol)
-    .catch(() => {})
+    .catch(() => null)
     .then(holding => {
+      if (!holding)
+        throw new Error(`Unable to get holdings for ${symbol}`);
       log.info(`Current ${symbol} stats:`);
       log.info(`  Balance:   ${holding.balance}`);
       log.info(`  Available: ${holding.available}`);
@@ -106,7 +108,9 @@ function createExchangeOrder(exchange, side, parsedProduct, amount, price, args 
       return Promise.all(orders)
         .map(order => {
           log.info(`Order successfully created with id ${order.id}`);
-          if (!args.notrack && !order.settled)
+          if (order.settled)
+            log.info(`Order ${order.id} immediately settled`);
+          else if (!args.notrack && !order.settled)
             return waitForOrderFill(exchange, order.id, args.pollsecs || 10);
           return order;
         });
@@ -127,42 +131,44 @@ function trailingSell(args) {
   log.info(`Trailing ${args.product}...`);
   const priceHistory = [];
 
-  exchange.getTicker(product.symbol, product.relation)
-    .then(initialTicker => {
+  return Promise.all([
+    exchange.getTicker(product.symbol, product.relation),
+    getCurrentProductStats(exchange, product.symbol),
+  ]).spread((initialTicker, holding) => {
+    if (holding.available <= 0 && !args.simulate)
+      throw new Error('You have no available funds to trail');
+    for (let i = 0; i < args.smaperiods; i++)
       priceHistory.push(initialTicker.price);
-    }).then(() => {
-      return intervalPromise(() => {
-        log.info('Polling trailing stop....');
-        return exchange.getTicker(product.symbol, product.relation)
-          .then(ticker => {
-            const mean = _.mean(priceHistory);
-            const stopTrigger = mean - mean * (args.trail / 100.0);
-            const stopLimit = stopTrigger - stopTrigger * (args.offsetprice / 100.0);
+  }).then(() => {
+    return intervalPromise(() => {
+      log.info('Polling trailing stop....');
+      return exchange.getTicker(product.symbol, product.relation)
+        .then(ticker => {
+          const mean = _.mean(priceHistory);
+          const stopTrigger = mean - mean * (args.trail / 100.0);
+          const stopLimit = stopTrigger - stopTrigger * (args.offsetprice / 100.0);
 
-            // add to price history after computing the mean
-            if (priceHistory.length === 0) {
-              // prefill
-              for (let i = 0; i < args.smaperiods; i++)
-                priceHistory.push(ticker.price);
-            } else {
-              priceHistory.push(ticker.price);
-              if (priceHistory.length > args.smaperiods)
-                priceHistory.shift();
-            }
+          // add to price history after computing the mean
+          if (ticker.price >= mean) {
+            priceHistory.push(ticker.price);
+            if (priceHistory.length > args.smaperiods)
+              priceHistory.shift();
+          }
 
-            log.debug(`Price ${ticker.price} < ${stopTrigger}?`);
+          log.debug(`Price ${ticker.price} < ${stopTrigger}?`);
 
-            if (ticker.price <= stopTrigger) {
-              log.warn(`Ticker ${ticker.price} is less than trigger price of ${stopTrigger}.  Creating sell order at ${stopLimit}`);
-              createExchangeOrder(exchange, 'sell', product, args.amount, stopLimit, args);
-              return true; // We're done here
-            }
-            return null;
-          }).catch(err => {
-            log.warn(`Error polling trailing sell: ${err.message}`);
-          });
-      }, args.pollsecs * 1000);
-    });
+          if (ticker.price <= stopTrigger) {
+            log.warn(`Ticker ${ticker.price} is less than trigger price of ${stopTrigger}.  Creating sell order at ${stopLimit}`);
+            return createExchangeOrder(exchange, 'sell', product, args.amount, stopLimit, args);
+          }
+          return null;
+        }).catch(err => {
+          log.warn(`Error polling trailing sell: ${err.message}`);
+        });
+    }, args.pollsecs * 1000);
+  }).catch(err => {
+    log.error(err.message);
+  });
 }
 
 /* eslint arrow-body-style: off */
@@ -221,13 +227,13 @@ const args = require('yargs')
       .demand('amount')
       .describe('trail', 'The percentage at which to trail the moving average')
       .number('trail')
-      .default('trail', 5.0)
+      .default('trail', 3.0)
       .describe('smaperiods', 'The number of periods to compute the current price')
       .number('smaperiods')
       .default('smaperiods', 90)
       .describe('offsetprice', 'The percentage at which to offset the price of the stop')
       .number('offsetprice')
-      .default('offsetprice', 1.0);
+      .default('offsetprice', 0.5);
   }, trailingSell)
   .command('help <command>', 'Show help for command', {}, () => args.showHelp())
   .demandCommand()
