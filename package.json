@@ -18,7 +18,8 @@
     "bitdo-ui": "./ui.js",
     "bitdo-order": "./order.js",
     "bitdo-recorder": "./recorder.js",
-    "bitdo-dash": "./dash.js"
+    "bitdo-dash": "./dash.js",
+    "bitdo-analyze": "./analyze.js"
   },
   "keywords": [
     "cryptocurrency",
