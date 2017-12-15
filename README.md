@@ -92,6 +92,32 @@ This will (by default) poll your holdings in exchanges and write them to a sqlit
 
 Uses *Sequelize* to write to DB, so can use any database it supports (mysql, postgres, etc)
 
+# Plugins
+
+There are two abstracted parts of bitdo2 that support plugins: *exchanges* and *plugins*
+
+## Exchanges
+
+Although bitdo2 comes with a set of exchanges builtin (though internally, they're just plugins), you
+can extend this by creating a global package (or installing a global package) with the name `bitdo-exchange-XXX`,
+where `XXX` is the name of your exchange.
+
+When loading, bitdo will search for a local exchange first, and if one is not found, will check the global
+packages.
+
+If you want to implement a new exchange, look at the [plugin constract](exchanges/index.js) for required
+methods and contracts.
+
+## Plugins
+
+Some pieces of bitdo use plugins to extend the application without needing to pull the dependencies into
+the main app.
+
+Similar to the exchange, these plugins will first be loaded internally, and then searched for in the global
+node modules with the pattern `bitdo-plugin-XXX`.
+
+To develop a plugin look at [plugin contract](plugins/index.js)
+
 # License
 
 Copyright (c) 2017 Christopher LaPointe
