@@ -162,6 +162,9 @@ function update() {
             }],
           },
         },
+        html: {
+          width: '66%',
+        },
       });
     }
   });

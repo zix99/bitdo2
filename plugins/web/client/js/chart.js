@@ -40,13 +40,17 @@ io.on('graph', ({ key, data }) => {
   console.log(`Updating ${key}`);
 
   if (!_.has(graphs, key)) {
+    const width = _.get(data, 'html.width', '33%');
+    const height = _.get(data, 'html.height', '300px');
+
     console.log(`Generating new chart with key ${key}`);
     const eleContainer = document.createElement('div');
     eleContainer.className = 'graph';
+    eleContainer.style = `width: ${width}; height: ${height}`;
     container.appendChild(eleContainer);
 
     const canvas = document.createElement('canvas');
-    canvas.setAttribute('width', '30%');
+    canvas.setAttribute('width', width);
     eleContainer.appendChild(canvas);
 
     const chart = new Chart(canvas.getContext('2d'), _.merge({
@@ -57,6 +61,7 @@ io.on('graph', ({ key, data }) => {
           text: key,
         },
         responsive: true,
+        maintainAspectRatio: false,
         legend: {
           position: 'bottom',
           display: false,
