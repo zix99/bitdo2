@@ -1,5 +1,6 @@
 exchanges/bittrex/node_modules/**
 exchanges/gdax/node_modules/**
+exchanges/robinhood/node_modules/**
 exchanges/mock/node_modules/**
 plugins/web/node_modules/**
 plugins/web/dist/**
