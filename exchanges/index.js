@@ -1,6 +1,8 @@
 const _ = require('lodash');
 const memoize = require('memoizee');
 const fs = require('fs');
+const proxyLogger = require('./proxyLogger');
+const proxyOrderSimulate = require('./proxyOrderSimulate');
 
 function Exchange(name, impl) {
   this.name = name.toUpperCase();
@@ -133,11 +135,16 @@ function requireExchange(name, config) {
 }
 
 module.exports = {
-  createExchange(name, config) {
-    return new Exchange(name, requireExchange(name, config));
+  createExchange(name, config, opts = {}) {
+    let exchange = new Exchange(name, requireExchange(name, config));
+    if (opts.log || config.log)
+      exchange = proxyLogger(exchange);
+    if (opts.simulate || config.simulate)
+      exchange = proxyOrderSimulate(exchange);
+    return exchange;
   },
 
-  createFromConfig(configSet) {
-    return _.map(configSet, (exchangeConfig, key) => this.createExchange(key, exchangeConfig));
+  createFromConfig(configSet, opts = {}) {
+    return _.map(configSet, (exchangeConfig, key) => this.createExchange(key, exchangeConfig, opts));
   },
 };

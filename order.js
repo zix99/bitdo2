@@ -98,7 +98,7 @@ function createExchangeOrder(exchange, side, parsedProduct, amount, price, args 
       return exchange.createLimitOrder(side, parsedProduct.symbol, parsedProduct.relation, resolvedAmount, price)
         .then(order => {
           log.info(`Order successfully created with id ${order.id}`);
-          if (!args.notrack)
+          if (!args.notrack && !order.settled)
             return waitForOrderFill(exchange, order.id, args.pollsecs || 10);
           return order;
         });
@@ -107,14 +107,14 @@ function createExchangeOrder(exchange, side, parsedProduct, amount, price, args 
 
 function createOrder(side, args) {
   const product = parsers.parseProduct(args.product);
-  const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
+  const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange], { simulate: args.simulate });
   return createExchangeOrder(exchange, side, product, args.amount, args.price, args);
 }
 
 
 function trailingSell(args) {
   const product = parsers.parseProduct(args.product);
-  const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange]);
+  const exchange = Exchanges.createExchange(product.exchange, config.exchanges[product.exchange], { simulate: args.simulate });
 
   log.info(`Trailing ${args.product}...`);
   const priceHistory = [];
@@ -172,6 +172,10 @@ const args = require('yargs')
   .describe('notrack', 'Dont track the order')
   .boolean('notrack')
   .default('notrack', false)
+  .describe('simulate', 'Simulate all ordering')
+  .boolean('simulate')
+  .default('simulate', false)
+  .alias('simulate', 's')
   .command('buy', 'Create an order to buy a product', sub => {
     return sub
       .describe('price', 'Price at which to buy product')
