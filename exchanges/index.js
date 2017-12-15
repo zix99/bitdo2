@@ -137,6 +137,7 @@ function requireExchange(name, config) {
 module.exports = {
   createExchange(name, config, opts = {}) {
     let exchange = requireExchange(name, config);
+    exchange.name = name.toUpperCase();
     if (opts.log || config.log)
       exchange = proxyLogger(exchange);
     if (opts.simulate || config.simulate)

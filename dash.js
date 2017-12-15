@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const Web = require('./plugins/web');
+const Plugins = require('./plugins');
 const Exchanges = require('./exchanges');
 const config = require('./config');
 const _ = require('lodash');
@@ -25,7 +25,9 @@ const args = require('yargs')
 const { Holdings } = DB(args.db);
 const exchanges = Exchanges.createFromConfig(config.exchanges);
 const holdingsService = new HoldingsService(exchanges);
-const web = Web();
+const plugins = Plugins.createFromConfig({
+  web: {},
+});
 
 const tickers = {};
 
@@ -34,7 +36,7 @@ function update() {
     .then(holdings => _.orderBy(holdings, h => h.conversions.USD, 'desc'))
     .then(holdings => _.filter(holdings, h => h.balance > 0))
     .then(holdings => {
-      web.graph('holdings', {
+      plugins.graph('holdings', {
         type: 'bar',
         data: {
           labels: _.map(holdings, 'currency'),
@@ -65,7 +67,7 @@ function update() {
           balance,
         });
 
-        web.graph(`holdings-${currency}`, {
+        plugins.graph(`holdings-${currency}`, {
           type: 'bar',
           data: {
             labels: _.map(currencyTicker.prices, 'ts'),
@@ -125,7 +127,7 @@ function update() {
     },
   }).then(results => {
     if (results.length > 0) {
-      web.graph('Long-term-USD', {
+      plugins.graph('Long-term-USD', {
         type: 'line',
         data: {
           labels: _.map(results, 'ts'),
