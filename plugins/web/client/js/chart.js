@@ -1,5 +1,6 @@
 const io = require('socket.io-client').connect();
 const _ = require('lodash');
+require('./chartPlugins')(Chart);
 
 const graphs = {};
 

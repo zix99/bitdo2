@@ -105,7 +105,7 @@ function update() {
                   && o.status === 'F'
                   && o.side === 'buy'
                   && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
-                .map(o => ({ x: o.date, y: o.price })),
+                .map(o => ({ x: o.date, y: o.price, text: `${o.size}` })),
               fill: true,
               pointRadius: 10,
               pointHoverRadius: 15,
@@ -121,7 +121,7 @@ function update() {
                   && o.status === 'F'
                   && o.side === 'sell'
                   && moment(o.date) >= moment(_(currencyTicker).map('ts').min()).subtract(1, 'week'))
-                .map(o => ({ x: o.date, y: o.price })),
+                .map(o => ({ x: o.date, y: o.price, text: `${o.size}` })),
               fill: true,
               pointRadius: 10,
               pointHoverRadius: 15,
