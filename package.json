@@ -29,6 +29,7 @@
   "author": "Chris LaPointe",
   "license": "MIT",
   "dependencies": {
+    "big.js": "^5.0.3",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.5",
     "bluebird": "^3.5.1",
@@ -37,7 +38,6 @@
     "lodash": "^4.17.4",
     "memoizee": "^0.4.11",
     "moment": "^2.19.3",
-    "numeral": "^2.0.6",
     "sequelize": "^4.27.0",
     "shortid": "^2.2.8",
     "sqlite3": "^3.1.13",

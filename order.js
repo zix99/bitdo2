@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const Promise = require('bluebird');
+const Big = require('big.js');
 const config = require('./config');
 const Exchanges = require('./exchanges');
 const log = require('./log').enableConsole();
@@ -62,15 +63,19 @@ function waitForOrderFill(exchange, orderId, frequencySecs = 10) {
   });
 }
 
+function fixedNumber(n, dec = 8) {
+  return Big(n).round(dec, 0).toFixed(dec);
+}
+
 // Ability to resolve "special" prices (like percentages and 'all')
 function computeRelativeAmount(amount, relative) {
   if (`${amount}`.toUpperCase() === 'ALL')
-    return relative;
+    return fixedNumber(relative);
   if (`${amount}`.endsWith('%')) {
     const percentage = parseFloat(amount.substr(0, amount.length - 1)) / 100.0;
-    return parseFloat(relative) * percentage;
+    return fixedNumber(parseFloat(relative) * percentage);
   }
-  return amount;
+  return fixedNumber(amount);
 }
 
 function getCurrentProductStats(exchange, symbol) {
@@ -196,7 +201,7 @@ const args = require('yargs')
       .number('price')
       .demand('price')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
-      .number('amount')
+      .string('amount')
       .demand('amount')
       .describe('spread', 'Number of orders to spread buy across')
       .number('spread')
@@ -211,7 +216,7 @@ const args = require('yargs')
       .number('price')
       .demand('price')
       .describe('amount', 'Amount of product to buy. Can be real number, percentage offset, or `all`')
-      .number('amount')
+      .string('amount')
       .demand('amount')
       .describe('spread', 'Number of orders to spread sell across')
       .number('spread')
@@ -223,7 +228,7 @@ const args = require('yargs')
   .command('trailsell', 'Create a trailing sell monitor', sub => {
     return sub
       .describe('amount', 'The amount to sell if hit the limit')
-      .number('amount')
+      .string('amount')
       .demand('amount')
       .describe('trail', 'The percentage at which to trail the moving average')
       .number('trail')
