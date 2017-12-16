@@ -70,12 +70,12 @@ function fixedNumber(n, dec = 8) {
 // Ability to resolve "special" prices (like percentages and 'all')
 function computeRelativeAmount(amount, relative) {
   if (`${amount}`.toUpperCase() === 'ALL')
-    return fixedNumber(relative);
+    return relative;
   if (`${amount}`.endsWith('%')) {
     const percentage = parseFloat(amount.substr(0, amount.length - 1)) / 100.0;
-    return fixedNumber(parseFloat(relative) * percentage);
+    return parseFloat(relative) * percentage;
   }
-  return fixedNumber(amount);
+  return amount;
 }
 
 function getCurrentProductStats(exchange, symbol) {
@@ -105,9 +105,16 @@ function createExchangeOrder(exchange, side, parsedProduct, amount, price, args 
       log.info(`Creating ${side} @ ${price} #${resolvedAmount}...`);
       const orders = [];
       for (let i = 0; i <= spread; i++) {
-        orders.push(exchange.createLimitOrder(side, parsedProduct.symbol, parsedProduct.relation, resolvedAmount / (spread * 2 + 1), price + price * spreadRatio * i));
-        if (i !== 0)
-          orders.push(exchange.createLimitOrder(side, parsedProduct.symbol, parsedProduct.relation, resolvedAmount / (spread * 2 + 1), price + price * spreadRatio * -i));
+        orders.push(exchange.createLimitOrder(
+          side, parsedProduct.symbol, parsedProduct.relation,
+          fixedNumber(resolvedAmount / (spread * 2 + 1)), fixedNumber(price + price * spreadRatio * i),
+        ));
+        if (i !== 0) {
+          orders.push(exchange.createLimitOrder(
+            side, parsedProduct.symbol, parsedProduct.relation,
+            fixedNumber(resolvedAmount / (spread * 2 + 1)), fixedNumber(price + price * spreadRatio * -i),
+          ));
+        }
       }
 
       return Promise.all(orders)
