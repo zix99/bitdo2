@@ -93,6 +93,8 @@ function update() {
           price: ticker.USD,
           balance,
         });
+        while (currencyTicker.prices.length > args.history)
+          currencyTicker.prices.shift();
 
         plugins.graph(`holdings-${exchange.name}-${currency}`, {
           type: 'bar',
