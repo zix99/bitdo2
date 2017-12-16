@@ -52,7 +52,7 @@ exports.handler = (args) => {
       slope: 0,
     });
 
-    let ema = book[0].price * 100;
+    let ema = book[0].size * 5;
     let net = book[0].size;
     _.each(book, order => {
       net += order.size;
@@ -64,7 +64,7 @@ exports.handler = (args) => {
         });
         walls[walls.length - 2].slope = (net - walls[walls.length - 2].size) / (order.price - walls[walls.length - 2].price) / 100;
       }
-      ema = (ema + order.size) / 2;
+      ema = (ema * 3 + order.size) / 4;
     });
 
     return walls;
@@ -80,7 +80,7 @@ exports.handler = (args) => {
       priceHistory.push({ price: ticker.price, ts: new Date() });
 
       const windowedBuys = _.filter(orderbook.buys, buy => buy.price > ticker.price - ticker.price * args.window);
-      const windowedSells = _.filter(orderbook.sells, buy => buy.price < ticker.price + ticker.price * args.window);
+      const windowedSells = _.filter(orderbook.sells, buy => buy.price < ticker.price + ticker.price * args.window && buy.price > 0);
 
       const buyWalls = discoverOrderbookWalls(_.reverse(_.clone(windowedBuys)));
       const sellWalls = discoverOrderbookWalls(windowedSells);
