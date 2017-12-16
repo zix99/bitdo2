@@ -5,6 +5,7 @@ rules.conf
 db.sqlite
 db.sqlite-journal
 bitdo.conf
+dashstate.json
 
 # Logs
 logs

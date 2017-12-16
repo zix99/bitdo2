@@ -8,6 +8,7 @@ const HoldingsService = require('./services/holdings');
 const DB = require('./lib/db');
 const moment = require('moment');
 const log = require('./log');
+const fs = require('fs');
 
 log.enableConsole();
 
@@ -19,6 +20,14 @@ const args = require('yargs')
   .describe('db', 'Database URL')
   .string('db')
   .default('db', config.db || 'sqlite://db.sqlite')
+  .describe('poll', 'How many seconds between polls')
+  .number('poll')
+  .default('poll', 60)
+  .describe('history', 'Number of ticks ot keep in history')
+  .number('history')
+  .default('history', 2880)
+  .describe('state', 'Filename to save state')
+  .string('state')
   .env('BITDO')
   .epilog('Environment variables settable with prefix BITDO_')
   .argv;
@@ -30,7 +39,20 @@ const plugins = Plugins.createFromConfig({
   web: {},
 });
 
-const tickers = {};
+function loadState() {
+  if (args.state && fs.existsSync(args.state)) {
+    log.info(`Loading state file ${args.state}`);
+    try {
+      const raw = fs.readFileSync(args.state, 'utf8');
+      return JSON.parse(raw);
+    } catch (err) {
+      log.error(`Unable to read state file: ${err.message}`);
+    }
+  }
+  return { tickers: {} };
+}
+
+const { tickers } = loadState();
 
 function update() {
   holdingsService.getHoldings()
@@ -210,5 +232,33 @@ function update() {
   });
 }
 
-setInterval(update, 30 * 1000);
+function save(cb) {
+  try {
+    if (args.state) {
+      log.debug('Saving state...');
+      const out = JSON.stringify({ tickers });
+      return fs.writeFile(args.state, out, 'utf8', (err) => {
+        if (!err)
+          log.info(`Saved state to ${args.state}`);
+        else
+          log.warn(`Error saving state to ${args.state}: ${err.message}`);
+        if (cb)
+          cb();
+      });
+    }
+  } catch (err) {
+    log.error(`Failed saving state to ${args.state}: ${err.message}`);
+  }
+  if (cb)
+    cb();
+  return null;
+}
+
+setInterval(update, args.poll * 1000);
 update();
+
+process.on('SIGINT', () => {
+  save(() => {
+    process.exit(0);
+  });
+});
