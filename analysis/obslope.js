@@ -42,7 +42,7 @@ exports.handler = (args) => {
     }, []);
   }
 
-  function discoverOrderbookWalls(book, wallThreshold = 2.5) {
+  function discoverOrderbookWalls(currentPrice, book, wallThreshold = 2, slopeAdjustor = 100.0, ignoreEarlyPrice = 0.01, smalength = 50) {
     const walls = [];
 
     // "Center" of the book
@@ -52,19 +52,21 @@ exports.handler = (args) => {
       slope: 0,
     });
 
-    let ema = book[0].size * 5;
+    const sma = [0];
     let net = book[0].size;
     _.each(book, order => {
       net += order.size;
-      if (order.size >= ema * wallThreshold) {
+      if (order.size >= _.mean(sma) * wallThreshold && Math.abs(order.price - currentPrice) > currentPrice * ignoreEarlyPrice) {
         walls.push({
           price: order.price,
           size: net,
           slope: 0,
         });
-        walls[walls.length - 2].slope = (net - walls[walls.length - 2].size) / (order.price - walls[walls.length - 2].price) / 100;
+        walls[walls.length - 2].slope = (net - walls[walls.length - 2].size) / (order.price - walls[walls.length - 2].price) / slopeAdjustor;
       }
-      ema = (ema * 3 + order.size) / 4;
+      if (order.size > _.mean(sma) * 0.9)
+        sma.push(order.size);
+      while (sma.length > smalength) sma.shift();
     });
 
     return walls;
@@ -82,8 +84,8 @@ exports.handler = (args) => {
       const windowedBuys = _.filter(orderbook.buys, buy => buy.price > ticker.price - ticker.price * args.window);
       const windowedSells = _.filter(orderbook.sells, buy => buy.price < ticker.price + ticker.price * args.window && buy.price > 0);
 
-      const buyWalls = discoverOrderbookWalls(_.reverse(_.clone(windowedBuys)));
-      const sellWalls = discoverOrderbookWalls(windowedSells);
+      const buyWalls = discoverOrderbookWalls(ticker.price, _.reverse(_.clone(windowedBuys)));
+      const sellWalls = discoverOrderbookWalls(ticker.price, windowedSells);
 
       plugins.graph(`${product.symbol}-${product.relation} Orderbook`, {
         type: 'line',
