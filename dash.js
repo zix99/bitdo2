@@ -230,6 +230,56 @@ function update() {
           width: '66%',
         },
       });
+
+      const bucketedOHLC = _(results)
+        .groupBy(x => moment(x.ts).startOf('day'))
+        .map((dayItems, ts) => {
+          const amounts = _.map(dayItems, x => x.get('sumUsd'));
+          return {
+            ts,
+            min: _.min(amounts),
+            max: _.max(amounts),
+            open: amounts[0],
+            close: amounts[amounts.length - 1],
+          };
+        })
+        .value();
+      plugins.graph('Holdings Low/High', {
+        type: 'line',
+        data: {
+          labels: _.map(bucketedOHLC, 'ts'),
+          datasets: [{
+            label: 'Min',
+            fill: '1',
+            borderColor: 'rgba(255,0,0,0.8)',
+            tension: 0,
+            data: _.map(bucketedOHLC, 'min'),
+          }, {
+            label: 'Max',
+            fill: '-1',
+            backgroundColor: 'rgba(0,255,0,0.4)',
+            borderColor: 'rgba(0,255,0,0.8)',
+            tension: 0,
+            data: _.map(bucketedOHLC, 'max'),
+          }],
+        },
+        options: {
+          scales: {
+            xAxes: [{
+              type: 'time',
+              distribution: 'series',
+              ticks: {
+                source: 'labels',
+                minRotation: 30,
+                autoSkip: true,
+              },
+              time: {
+                tooltipFormat: 'll HH:mm',
+              },
+            }],
+          },
+        },
+      });
     }
   });
 }
