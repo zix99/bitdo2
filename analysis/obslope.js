@@ -62,7 +62,7 @@ exports.handler = (args) => {
           size: net,
           slope: 0,
         });
-        walls[walls.length - 2].slope = (net - walls[walls.length - 2].size) / (order.price - walls[walls.length - 2].price) / slopeAdjustor;
+        walls[walls.length - 2].slope = Math.abs((net - walls[walls.length - 2].size) / (order.price - walls[walls.length - 2].price)) / slopeAdjustor;
       }
       if (order.size > _.mean(sma) * 0.9)
         sma.push(order.size);
@@ -72,7 +72,13 @@ exports.handler = (args) => {
     return walls;
   }
 
+  const outstandingOrders = [];
   const priceHistory = [];
+  let velocity = 0;
+  const velocitySMA = [];
+  let lastPrice = null;
+  const velocityPeriods = 15;
+  let currentBuy = null;
   function update() {
     log.info('Updating OB analysis...');
     return Promise.all([
@@ -87,6 +93,44 @@ exports.handler = (args) => {
       const buyWalls = discoverOrderbookWalls(ticker.price, _.reverse(_.clone(windowedBuys)));
       const sellWalls = discoverOrderbookWalls(ticker.price, windowedSells);
 
+      /*
+      Basic algorithm thoughts:
+      - If volume velocity is sufficiently high enough
+      - If going-right has a SUFFICIENTLY lower slope than going left (aka, favoring buys)
+      - If it has well-defined walls
+      - Add a buy order right after the first wall, and a sell right before the one after
+      */
+
+      // TODO: Right now just using price as velocity, but should really be volume
+      velocitySMA.push(ticker.price - (lastPrice || ticker.price));
+      while (velocitySMA.length > velocityPeriods)
+        velocitySMA.shift();
+      lastPrice = ticker.price;
+      velocity = _.mean(velocitySMA);
+
+      const slopeModifier = 2;
+      if (buyWalls.length >= 2 && sellWalls.length >= 3
+        && buyWalls[0].slope < sellWalls[0].slope * slopeModifier
+        && velocity > ticker.price * 0.002
+        && !currentBuy) {
+        const buyPrice = sellWalls[1].price + 0.12;
+        log.info(`Triggering expected buy at ${buyPrice}`);
+        currentBuy = {
+          price: buyPrice,
+          size: 5,
+        };
+        outstandingOrders.push(currentBuy);
+      }
+
+      if (currentBuy) {
+        // Watch the buy price, and the walls, as they may be adjusting
+        // A) Update sell to change price
+        // B) Immediate sell in risky situations (or cancel the buy if not settled)
+      }
+
+      /*
+      Display graph to user
+      */
       plugins.graph(`${product.symbol}-${product.relation} Orderbook`, {
         type: 'line',
         data: {
@@ -98,6 +142,7 @@ exports.handler = (args) => {
             fill: true,
             pointRadius: 0,
             data: createGraphData(_.reverse(windowedBuys)),
+            yAxisID: 'y-axis-1',
           }, {
             label: 'Sells',
             steppedLine: 'before',
@@ -106,6 +151,7 @@ exports.handler = (args) => {
             fill: true,
             pointRadius: 0,
             data: createGraphData(windowedSells),
+            yAxisID: 'y-axis-1',
           }, {
             label: 'Buy-Walls',
             pointRadius: 10,
@@ -119,9 +165,11 @@ exports.handler = (args) => {
               y: item.size,
               text: `y=${~~item.slope}`,
             })),
+            yAxisID: 'y-axis-1',
           }, {
             label: 'Sell-Walls',
             pointRadius: 10,
+            pointHoverRadius: 15,
             pointStyle: 'triangle',
             fill: false,
             backgroundColor: 'white',
@@ -132,6 +180,35 @@ exports.handler = (args) => {
               y: item.size,
               text: `y=${~~item.slope}`,
             })),
+            yAxisID: 'y-axis-1',
+          }, {
+            label: 'Velocity',
+            pointRadius: 10,
+            pointHoverRadius: 15,
+            fill: false,
+            borderColor: 'rgba(255,255,255,0.5)',
+            lineTension: 0,
+            data: [{
+              x: ticker.price,
+              y: 0,
+              text: `v=${velocity}`,
+            }, {
+              x: ticker.price + velocity,
+              y: 0,
+            }],
+            yAxisID: 'y-axis-2',
+          }, {
+            label: 'Orders',
+            pointRadius: 10,
+            pointHoverRadius: 15,
+            pointStyle: 'star',
+            fill: false,
+            showLine: false,
+            data: _.map(outstandingOrders, order => ({
+              x: order.price,
+              y: order.size,
+            })),
+            yAxisID: 'y-axis-2',
           }],
         },
         options: {
@@ -143,6 +220,20 @@ exports.handler = (args) => {
                 source: 'labels',
                 minRotation: 30,
                 autoSkip: true,
+              },
+            }],
+            yAxes: [{
+              type: 'linear',
+              display: true,
+              position: 'left',
+              id: 'y-axis-1',
+            }, {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              id: 'y-axis-2',
+              gridLines: {
+                drawOnChartArea: false,
               },
             }],
           },
