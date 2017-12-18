@@ -19,7 +19,8 @@
     "bitdo-order": "./order.js",
     "bitdo-recorder": "./recorder.js",
     "bitdo-dash": "./dash.js",
-    "bitdo-analyze": "./analyze.js"
+    "bitdo-analyze": "./analyze.js",
+    "bitdo-watch": "./watch.js"
   },
   "keywords": [
     "cryptocurrency",

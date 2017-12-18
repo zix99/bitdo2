@@ -76,6 +76,23 @@ Make sure you have configuration in the current directory.
 
 You will be presented with a UI showing your current holdings and orders.
 
+## Watch
+
+Run: `bitdo-watch --help`
+
+Watches prices or orders for completion or failure cases. Meant to be chained with something else, eg:
+
+```bash
+# Watch an order and alert
+bitdo-watch -p gdax:BTC-USD --crosses 20000 --timeout 1d && notify-send "Bitcoin crossed 20000!" || notify-send "Bitcoin didnt cross after a day"
+
+# Trigger an order when a price dips below a value
+bitdo-watch -p gdax:BTC-USD --below 18000 --timeout 1d && bitdo-order buy -p gdax:BTC-USD --price 18000 --amount 0.1 || echo "Order timed out"
+
+# And can even be chained for more complex scenarios (Crosses below, then back up)
+bitdo-watch -p gdax:BTC-USD --below 18000 && bitdo-watch -p gdax:BTC-USD --above 18500 || bitdo-order ...
+```
+
 ## Order
 
 Run: `bitdo-order --help`
