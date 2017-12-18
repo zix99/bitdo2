@@ -42,7 +42,7 @@ const holdingTable = contrib.table({
   height: '50%',
   interactive: true,
   label: 'Holdings',
-  columnWidth: [10, 8, 4, 12, 12, 12, 12, 12, 8],
+  columnWidth: [10, 10, 6, 12, 12, 12, 12, 12, 12, 8],
   columnSpacing: 4,
   border: {
     type: 'line',
@@ -139,6 +139,7 @@ function updateHoldings() {
           moment(v.updatedAt).format('Do hA'),
           v.exchange.name,
           v.currency,
+          v.ticker.BTC ? format.number(v.ticker.BTC) : '',
           chalk.yellow(format.number(v.ticker.USD)),
           chalk.bold.blueBright(format.number(v.balance)),
           format.number(v.hold),
@@ -148,10 +149,10 @@ function updateHoldings() {
         ];
       });
       data.unshift([]);
-      data.unshift(['', 'Total', '', '', '', '', format.number(sums.BTC), format.number(sums.USD)]);
+      data.unshift(['', 'Total', '', '', '', '', '', format.number(sums.BTC), format.number(sums.USD)]);
 
       holdingTable.setData({
-        headers: ['Updated', 'Exch', 'Sym', 'Last USD', 'Owned', 'Hold', 'BTC', 'USD', 'EMA-D'],
+        headers: ['Updated', 'Exch', 'Sym', 'BTC', 'Last USD', 'Owned', 'Hold', 'BTC', 'USD', 'EMA-D'],
         data,
       });
       screen.render();

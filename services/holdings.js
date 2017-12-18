@@ -25,6 +25,7 @@ class Holdings {
       },
       ticker: {
         USD: usd,
+        BTC: btc,
       },
     }, holding));
   }

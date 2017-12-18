@@ -132,19 +132,29 @@ module.exports = (exchangeOpts) => {
 
     getHoldings() {
       return getPrimaryAccount()
-        .then(account => makeAuthenticatedPaginatedRequest('GET', account.positions))
-        .map(holding => {
-          return makeAuthenticatedRequest('GET', holding.instrument)
-            .then(instrument => {
-              return _.merge({ inst: instrument }, holding);
+        .then(account => {
+          return makeAuthenticatedPaginatedRequest('GET', account.positions)
+            .map(holding => {
+              return makeAuthenticatedRequest('GET', holding.instrument)
+                .then(instrument => {
+                  return _.merge({ inst: instrument }, holding);
+                });
+            }).map(holding => ({
+              id: `RH-${holding.inst.symbol}`,
+              currency: holding.inst.symbol,
+              balance: parseFloat(holding.quantity),
+              available: parseFloat(holding.quantity) - parseFloat(holding.shares_held_for_sells) - parseFloat(holding.shares_held_for_buys),
+              hold: parseFloat(holding.shares_held_for_buys) + parseFloat(holding.shares_held_for_sells),
+            })).then(holdings => {
+              return _.concat(holdings, {
+                id: 'RH-USD',
+                currency: 'USD',
+                balance: account.cash || 0,
+                available: account.cash_available_for_withdrawal || 0,
+                hold: account.cash_held_for_orders || 0,
+              });
             });
-        }).map(holding => ({
-          id: `RH-${holding.inst.symbol}`,
-          currency: holding.inst.symbol,
-          balance: parseFloat(holding.quantity),
-          available: parseFloat(holding.quantity) - parseFloat(holding.shares_held_for_sells) - parseFloat(holding.shares_held_for_buys),
-          hold: parseFloat(holding.shares_held_for_buys) + parseFloat(holding.shares_held_for_sells),
-        }));
+        });
     },
 
     getOrder() {
