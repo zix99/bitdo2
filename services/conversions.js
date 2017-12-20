@@ -25,7 +25,7 @@ module.exports = exchanges => {
           if (_.has(markets, flipkey))
             return markets[flipkey].exchange.getTicker(target, currency).then(ret => 1.0 / ret.price);
 
-          throw new Error(`Unable to translate market ${mainkey}`);
+          return null; // We succeeded in not being able to find a conversion
         });
     },
 
@@ -37,7 +37,7 @@ module.exports = exchanges => {
           return Promise.all([
             this.getRateTicker(currency, 'BTC'),
             this.getRateTicker('BTC', target),
-          ]).spread((viabtc, totarget) => viabtc * totarget);
+          ]).spread((viabtc, totarget) => (viabtc === null || totarget === null ? null : viabtc * totarget));
         });
     },
   };

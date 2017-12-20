@@ -27,14 +27,14 @@ const args = require('yargs')
 log.enableConsole(args.verbose ? 'debug' : 'info');
 
 const exchanges = Exchanges.createFromConfig(config.exchanges);
-const holdings = new HoldingsService(exchanges);
+const holdings = new HoldingsService(exchanges, { allOrFail: true });
 
 const { Holdings, db } = DB(args.db);
 
 function scrapeHoldings() {
   log.info('Fetching holdings...');
   const ts = new Date();
-  return holdings.getHoldings()
+  return holdings.getHoldings({ allOrFail: true })
     .map(holding => {
       log.info(`Holding: ${holding.balance} of ${holding.currency}`);
       return Holdings.create({
