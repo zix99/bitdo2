@@ -109,7 +109,11 @@ module.exports = (exchangeOpts) => {
         .then(ticker => ({
           price: (parseFloat(ticker.ask_price) + parseFloat(ticker.bid_price)) / 2.0,
           volume: 0,
-        }));
+        })).catch(err => {
+          if (err.response.status === 404)
+            return null;
+          throw err;
+        });
     },
 
     getOrders() {
