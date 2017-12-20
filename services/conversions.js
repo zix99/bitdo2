@@ -32,7 +32,10 @@ module.exports = exchanges => {
     getRate(currency, target) {
       /* eslint arrow-body-style: off */
       return this.getRateTicker(currency, target)
-        .catch(() => {
+        .then(pureRate => {
+          if (pureRate !== null)
+            return pureRate;
+
           // Try resolving via BTC
           return Promise.all([
             this.getRateTicker(currency, 'BTC'),
