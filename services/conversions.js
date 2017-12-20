@@ -19,11 +19,11 @@ module.exports = exchanges => {
         .then(markets => {
           const mainkey = `${currency}:${target}`;
           if (_.has(markets, mainkey))
-            return markets[mainkey].exchange.getTicker(currency, target).then(ret => ret.price);
+            return markets[mainkey].exchange.getTicker(currency, target).then(ret => ret.price || 0);
 
           const flipkey = `${target}:${currency}`;
           if (_.has(markets, flipkey))
-            return markets[flipkey].exchange.getTicker(target, currency).then(ret => 1.0 / ret.price);
+            return markets[flipkey].exchange.getTicker(target, currency).then(ret => 1.0 / (ret.price || 1));
 
           return null; // We succeeded in not being able to find a conversion
         });
