@@ -131,10 +131,14 @@ function updateHoldings() {
       const sums = { BTC: 0, USD: 0 };
       const data = _.map(holdings, v => {
         const key = `${v.exchange.name}:${v.currency}`;
-        HOLDING_DELTA_HISTORY[key] = (_.get(HOLDING_DELTA_HISTORY, key, v.conversions.USD) + v.conversions.USD) / 2.0;
-        const delta = v.conversions.USD - HOLDING_DELTA_HISTORY[key];
+
+        const lastHistoryPrice = _.get(HOLDING_DELTA_HISTORY, key, v.conversions.USD);
+        const delta = v.conversions.USD - lastHistoryPrice;
+        HOLDING_DELTA_HISTORY[key] = (lastHistoryPrice * 3 + v.conversions.USD) / 4.0;
+
         sums.BTC += v.conversions.BTC;
         sums.USD += v.conversions.USD;
+
         return [
           moment(v.updatedAt).format('Do hA'),
           v.exchange.name,
