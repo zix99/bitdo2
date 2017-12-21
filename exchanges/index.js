@@ -75,6 +75,7 @@ class Exchange {
   getOrders() {
     /*
     [{
+      id: 'orderId',
       status: 'O', // O=open, F=filled, X=canceled/rejected, ? = unknown/other
       product: order.product, // eg RDD-BTC
       price: order.price, (per unit)
@@ -124,6 +125,8 @@ class Exchange {
       price: ...,
       quantity: ...,
       product: ...,
+      // Meta:
+      id: ... (appended by this)
     } */
     return this._impl.getOrder(orderId)
       .then(ret => _.assign({ exchange: this, id: orderId }, ret));

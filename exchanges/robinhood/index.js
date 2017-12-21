@@ -123,6 +123,7 @@ module.exports = (exchangeOpts) => {
             .then(instrument => _.merge(order, { instrument }));
         })
         .map(order => ({
+          id: order.id,
           status: getStatusFromState(order.state),
           product: `${order.instrument.symbol}-USD`,
           price: parseFloat(order.price || order.average_price),

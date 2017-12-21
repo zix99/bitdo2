@@ -72,6 +72,7 @@ module.exports = exchangeOpts => {
           .then(resp => resp.data.result)
           .map(order => {
             return _.assign({
+              id: order.OrderUuid,
               status: 'F',
               product: order.Exchange,
               price: order.PricePerUnit || order.Price / order.Quantity,
@@ -84,6 +85,7 @@ module.exports = exchangeOpts => {
           .then(resp => resp.data.result)
           .map(order => {
             return _.assign({
+              id: order.OrderUuid,
               status: 'O',
               product: order.Exchange,
               price: order.Limit,
