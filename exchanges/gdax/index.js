@@ -69,6 +69,7 @@ module.exports = exchangeOpts => {
       return executeRequest('GET', '/orders?status=all')
         .map(order => {
           return {
+            id: order.id,
             status: getStatusCode(order.status),
             product: order.product_id,
             price: order.price,
