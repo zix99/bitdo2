@@ -37,6 +37,7 @@
     "bluebird": "^3.5.1",
     "chalk": "^2.3.0",
     "columnify": "^1.5.4",
+    "inquirer": "^4.0.1",
     "js-yaml": "^3.10.0",
     "lodash": "^4.17.4",
     "memoizee": "^0.4.11",

@@ -6,15 +6,20 @@ const chalk = require('chalk');
 const columnify = require('columnify');
 const moment = require('moment');
 const format = require('../lib/format');
+const inquirer = require('inquirer');
 
-function buildExchange(args) {
+function buildExchanges(args) {
   return Exchanges.createFromConfig(config.exchanges, { simulate: args.simulate });
 }
 
-function cmdList(args) {
-  const exchanges = buildExchange(args);
+function colorSide(side) {
+  return side === 'buy' ? chalk.green(side) : chalk.red(side);
+}
 
-  Promise.map(exchanges, exchange => exchange.getOrders())
+function cmdList(args) {
+  const exchanges = buildExchanges(args);
+
+  return Promise.map(exchanges, exchange => exchange.getOrders())
     .then(_.flatten)
     .then(orders => {
       let orderSet = args.all ? orders : _.filter(orders, x => x.status === 'O' || x.stauts === '?');
@@ -39,7 +44,7 @@ function cmdList(args) {
           exchange: chalk.yellow(order.exchange.name),
           product: chalk.white(order.product),
           type: order.type,
-          side: order.side === 'buy' ? chalk.green(order.side) : chalk.red(order.side),
+          side: colorSide(order.side),
           status: order.status,
           price: chalk.blue(format.number(order.price)),
           size: chalk.blueBright(format.number(order.size)),
@@ -47,6 +52,43 @@ function cmdList(args) {
         }));
         console.log(columnify(table));
       }
+    });
+}
+
+function queryForOrder(exchanges, providedId, message = 'Select order') {
+  return Promise.map(exchanges, exchange => exchange.getOrders())
+    .then(_.flatten)
+    .then(orders => _.filter(orders, order => order.status === 'O'))
+    .then(orders => {
+      if (providedId)
+        return _.find(orders, x => x.id === providedId);
+
+      return inquirer.prompt({
+        type: 'list',
+        name: 'order',
+        message,
+        choices: _.map(orders, x => ({
+          name: `${x.id} ${chalk.yellow(x.exchange.name)} ${x.product} ${colorSide(x.side)} ${chalk.blue(format.number(x.price))} ${chalk.blueBright(format.number(x.size))}`,
+          short: x.id,
+          value: x,
+        })),
+      });
+    })
+    .then(answer => answer.order);
+}
+
+function cmdCancel(args) {
+  const exchanges = buildExchanges(args);
+
+  return queryForOrder(exchanges, args.id, 'Pick order to cancel')
+    .then(order => {
+      console.log(`Will cancel ${order.id} ${order.exchange.name} ${order.product}...`);
+      return order.exchange.cancelOrder(order.id);
+    })
+    .then(() => {
+      console.log('Order canceled');
+    }).catch(err => {
+      console.log(`Error canceling order: ${err.message}`);
     });
 }
 
@@ -68,5 +110,8 @@ exports.builder = args => args
     .describe('json', 'Output JSON data')
     .boolean('json'), cmdList)
   .command('buy <product>', 'Executes a buy of a product')
-  .command('sell <product>', 'Executes a sell of a product');
+  .command('sell <product>', 'Executes a sell of a product')
+  .command('cancel', 'Cancel an order', x => x
+    .describe('id', 'Order id to cancel. If not provided, will be prompted for')
+    .string('id'), cmdCancel);
 exports.handler = cmdList;
