@@ -44,6 +44,7 @@ function cmdList(args) {
       else {
         const table = _.map(_.orderBy(orders, x => moment(x.date)), order => ({
           id: chalk.gray(order.id),
+          date: chalk.gray(moment(order.date).format('MM/DD/YY HH:mm')),
           exchange: chalk.yellow(order.exchange.name),
           product: chalk.white(order.product),
           type: order.type,
