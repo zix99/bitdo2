@@ -33,6 +33,9 @@ function cmdList(args) {
       if (args.sells)
         orderSet = _.filter(orderSet, x => x.side === 'sell');
 
+      if (args.product)
+        orderSet = _.filter(orderSet, x => x.product === args.product);
+
       return orderSet;
     })
     .then(orders => {
@@ -107,6 +110,8 @@ exports.builder = args => args
     .boolean('buys')
     .describe('sells', 'Show only sell orders')
     .boolean('sells')
+    .describe('product', 'Show only when product matches this string')
+    .string('product')
     .describe('json', 'Output JSON data')
     .boolean('json'), cmdList)
   .command('buy <product>', 'Executes a buy of a product')
