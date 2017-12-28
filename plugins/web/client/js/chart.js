@@ -23,6 +23,10 @@ const CHARTJS_DARK = {
         },
       }],
     },
+    // Disable animation
+    animation: { duration: 0 },
+    hover: { animationDuration: 0 },
+    responsiveAnimationDuration: 0,
   },
 };
 
