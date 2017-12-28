@@ -25,7 +25,7 @@ const args = require('yargs')
   .default('poll', 60)
   .describe('history', 'Number of ticks ot keep in history')
   .number('history')
-  .default('history', 2880)
+  .default('history', 60 * 12)
   .describe('state', 'Filename to save state')
   .string('state')
   .env('BITDO')
@@ -110,10 +110,11 @@ function update() {
               data: _.map(currencyTicker.prices, 'price'),
               yAxisID: 'y-axis-1',
             }, {
-              type: 'bar',
+              type: 'line',
               label: 'Balance',
-              fill: true,
+              fill: false,
               borderWidth: 1,
+              pointRadius: 0,
               backgroundColor: 'rgba(127,127,127,0.2)',
               borderColor: 'rgba(127,127,127,0.5)',
               data: _.map(currencyTicker.prices, 'balance'),
@@ -196,10 +197,20 @@ function update() {
     },
   }).then(results => {
     if (results.length > 0) {
+      const hourOHLC = _(results)
+        .groupBy(x => moment(x.ts).startOf('hour'))
+        .map((dayItems, ts) => {
+          const amounts = _.map(dayItems, x => x.get('sumUsd'));
+          return {
+            ts,
+            mean: _.mean(amounts),
+          };
+        })
+        .value();
       plugins.graph('Long-term-USD', {
         type: 'line',
         data: {
-          labels: _.map(results, 'ts'),
+          labels: _.map(hourOHLC, 'ts'),
           datasets: [{
             label: 'USD',
             fill: true,
@@ -207,7 +218,7 @@ function update() {
             backgroundColor: 'rgba(255,0,0,0.5)',
             borderColor: 'rgba(255,0,0,1.0)',
             borderWidth: 1,
-            data: _.map(results, x => x.get('sumUsd')),
+            data: _.map(hourOHLC, 'mean'),
           }],
         },
         options: {
