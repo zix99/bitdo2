@@ -18,9 +18,11 @@ module.exports = (exchangeOpts) => {
     const qs = querystring.stringify({
       username: config.username,
       password: config.password,
+      grant_type: "password",
+      client_id: "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS",
     });
     return axios({
-      url: `${config.host}/api-token-auth/`,
+      url: `${config.host}/oauth2/token/`,
       method: 'POST',
       data: qs,
       header: {
@@ -28,7 +30,7 @@ module.exports = (exchangeOpts) => {
       },
     }).then(ret => {
       /* eslint prefer-destructing: off */
-      __token = ret.data.token;
+      __token = ret.data.access_token;
       return __token;
     });
   }
@@ -49,7 +51,7 @@ module.exports = (exchangeOpts) => {
           url,
           data: body,
           headers: {
-            Authorization: `Token ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
       }).then(resp => resp.data);
@@ -105,7 +107,7 @@ module.exports = (exchangeOpts) => {
     getTicker(currency, relation) {
       if (relation !== 'USD')
         return Promise.reject();
-      return makeRequest('GET', `/quotes/${currency}/`)
+      return makeAuthenticatedRequest('GET', `/quotes/${currency}/`)
         .then(ticker => ({
           price: (parseFloat(ticker.ask_price) + parseFloat(ticker.bid_price)) / 2.0,
           volume: 0,
