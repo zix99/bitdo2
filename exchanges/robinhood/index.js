@@ -83,7 +83,7 @@ module.exports = (exchangeOpts) => {
     switch (state) {
       case 'filled': return 'F';
       case 'rejected': return 'X';
-      case 'canceled': return 'X';
+      case 'cancelled': return 'X';
       case 'failed': return 'X';
       case 'queued': return 'O';
       case 'unconfirmed': return 'O';
