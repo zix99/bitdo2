@@ -33,13 +33,13 @@
   "dependencies": {
     "big.js": "^5.0.3",
     "blessed": "^0.1.81",
-    "blessed-contrib": "^4.8.5",
+    "blessed-contrib": "^4.8.10",
     "bluebird": "^3.5.1",
     "chalk": "^2.3.0",
     "columnify": "^1.5.4",
     "inquirer": "^4.0.1",
     "js-yaml": "^3.10.0",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.11",
     "memoizee": "^0.4.11",
     "moment": "^2.19.3",
     "numeral": "^2.0.6",
@@ -55,6 +55,6 @@
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.8.0",
     "mocha": "^4.0.1",
-    "nodemon": "^1.12.4"
+    "nodemon": "^1.18.10"
   }
 }
