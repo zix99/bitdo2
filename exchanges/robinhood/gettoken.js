@@ -9,8 +9,10 @@ Helper to create a token by logging in with username and password
 Token can be used in configuration rather than password
 */
 
+/* eslint no-console: off */
+
 const config = {
-	host: 'https://api.robinhood.com',
+  host: 'https://api.robinhood.com',
 };
 
 if (!args.username || !args.password) {
@@ -21,10 +23,10 @@ if (!args.username || !args.password) {
 const qs = querystring.stringify({
   username: args.username,
   password: args.password,
-  grant_type: "password",
-  client_id: "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS",
+  grant_type: 'password',
+  client_id: 'c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS',
 });
-return axios({
+axios({
   url: `${config.host}/oauth2/token/`,
   method: 'POST',
   data: qs,

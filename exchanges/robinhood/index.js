@@ -21,8 +21,8 @@ module.exports = (exchangeOpts) => {
     const qs = querystring.stringify({
       username: config.username,
       password: config.password,
-      grant_type: "password",
-      client_id: "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS",
+      grant_type: 'password',
+      client_id: 'c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS',
     });
     return axios({
       url: `${config.host}/oauth2/token/`,
@@ -36,13 +36,6 @@ module.exports = (exchangeOpts) => {
       __token = ret.data.access_token;
       return __token;
     });
-  }
-
-  function makeRequest(method, uri) {
-    return Promise.resolve(axios({
-      url: `${config.host}${uri}`,
-      method,
-    })).then(resp => resp.data);
   }
 
   function makeAuthenticatedRequest(method, uri, body) {
