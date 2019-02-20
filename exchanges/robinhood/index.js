@@ -160,7 +160,22 @@ module.exports = (exchangeOpts) => {
         .then(_.flatten);
     },
 
-    getHoldings() {
+    __getOptionHoldings() {
+      return makeAuthenticatedPaginatedRequest('GET', '/options/positions/?nonzero=True')
+        .map(option => {
+          return makeAuthenticatedRequest('GET', option.option)
+            .then(suboption => _.merge(option, { option: suboption }));
+        })
+        .map(option => ({
+          id: `RHO-${option.chain_symbol}`,
+          currency: option.chain_symbol,
+          balance: parseFloat(option.quantity) * parseFloat(option.trade_value_multiplier),
+          available: parseFloat(option.quantity) - parseFloat(option.pending_buy_quantity) - parseFloat(option.pending_sell_quantity),
+          detail: `${option.option.type} ${option.option.expiration_date}`,
+        }));
+    },
+
+    __getStockHoldings() {
       return getPrimaryAccount()
         .then(account => {
           return makeAuthenticatedPaginatedRequest('GET', account.positions)
@@ -185,6 +200,11 @@ module.exports = (exchangeOpts) => {
               });
             });
         });
+    },
+
+    getHoldings() {
+      return Promise.all([this.__getStockHoldings(), this.__getOptionHoldings()])
+        .then(_.flatten);
     },
 
     getOrder() {
