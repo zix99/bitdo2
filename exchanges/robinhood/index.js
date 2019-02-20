@@ -5,6 +5,9 @@ const querystring = require('querystring');
 
 module.exports = (exchangeOpts) => {
   const config = _.merge({
+    username: null,
+    password: null,
+    token: null,
     host: 'https://api.robinhood.com',
   }, exchangeOpts);
 
@@ -14,7 +17,7 @@ module.exports = (exchangeOpts) => {
     if (__token)
       return Promise.resolve(__token);
     if (config.token)
-      return Promise.resolve(__token);
+      return Promise.resolve(config.token);
     const qs = querystring.stringify({
       username: config.username,
       password: config.password,
@@ -118,7 +121,7 @@ module.exports = (exchangeOpts) => {
         });
     },
 
-    getOrders() {
+    __getStockOrders() {
       return makeAuthenticatedPaginatedRequest('GET', '/orders/')
         .map(order => {
           return makeAuthenticatedRequest('GET', order.instrument)
@@ -135,6 +138,26 @@ module.exports = (exchangeOpts) => {
           side: order.side,
           fee: parseFloat(order.fees),
         }));
+    },
+
+    __getOptionOrders() {
+      return makeAuthenticatedPaginatedRequest('GET', '/options/orders/')
+        .map(option => ({
+          id: option.id,
+          status: getStatusFromState(option.state),
+          product: `${option.chain_symbol}-USD`,
+          price: parseFloat(option.premium),
+          size: parseFloat(option.quantity),
+          date: option.created_at,
+          type: option.type,
+          side: option.opening_strategy,
+          fee: parseFloat(option.premium),
+        }));
+    },
+
+    getOrders() {
+      return Promise.all([this.__getStockOrders(), this.__getOptionOrders()])
+        .then(_.flatten);
     },
 
     getHoldings() {
